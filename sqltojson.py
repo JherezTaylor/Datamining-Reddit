@@ -9,18 +9,18 @@ def dict_factory(cursor, row):
         d[col[0]] = row[idx]
     return d
  
-connection = sqlite3.connect("sample.db")
+connection = sqlite3.connect("database.sqlite")
 connection.row_factory = dict_factory
  
 cursor = connection.cursor()
  
-cursor.execute("select * from sample")
+cursor.execute("select * from May2015 LIMIT 1000")
  
 # fetch all or one we'll go for all.
  
 results = cursor.fetchall()
 
-with open('workfile', 'w+') as f:
+with open('database_dump.json', 'w+') as f:
 	json.dump(results,f)
 f.closed
  
