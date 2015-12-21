@@ -1,0 +1,143 @@
+// Representation of object types
+t1_: comment
+t2_: account
+t3_: link
+t4_: message
+t5_: subreddit
+
+/* 
+	All objects within the dataset are either comments or links. They can contain
+ 	references to parent nodes if they are not the root node themselves. 
+	
+	A parent node can be either a link (root) or a comment, ie, if one replies to a comment,
+	then that comment is the parent node.
+
+	If a parent node of an object is of type link (t3), then it means that it is a reply to the root node.
+	If a parent node is of type comment (t1), then it means that it is a reply to a comment B which in turn is a reply to
+	link A (root).
+	
+	If the link_id == parent_id then it means that it is the root.
+ 	Regardless of whether an object is a comment or not, it can still be linked to, and so it 
+ 	they all have a link_id, which is of type link (t3_xxxx).
+
+ 	id refers to the id of an object itself, id == name and they are of type t1 (comment). Links are treated as comments
+ 	which it is this way. All objects are comments and then a link inherits the properties of a comment.
+
+*/
+
+// Sample of two objects from the dataset.
+[
+	// This is a root level comment. 
+	{
+		"subreddit_id": "t5_2qo4s", 
+		"removal_reason": null, 
+		"link_id": "t3_34g8mx", 
+		"id": "cqug90h", 
+		"gilded": 0, 
+		"archived": 0, 
+		"author": "WyaOfWade", 
+		"parent_id": "t3_34g8mx", 
+		"score": 4, 
+		"retrieved_on": 1432703079, 
+		"controversiality": 0, 
+		"body": "gg this one's over. off to watch the NFL draft I guess", 
+		"edited": 0, 
+		"author_flair_css_class": "Heat", 
+		"downs": 0, 
+		"subreddit": "nba", 
+		"score_hidden": 0, 
+		"name": "t1_cqug90h", 
+		"author_flair_text": "Heat", 
+		"created_utc": 1430438400, 
+		"ups": 4, 
+		"distinguished": null
+	},
+
+	{
+		"subreddit_id": "t5_2qo4s", 
+		"removal_reason": null, 
+		"link_id": "t3_34gmd0", 
+		"id": "cqug91z", 
+		"gilded": 0, 
+		"archived": 0, 
+		"author": "starvinmartin", 
+		"parent_id": "t1_cqug5ww", 
+		"score": 21, 
+		"retrieved_on": 1432703080, 
+		"controversiality": 0, 
+		"body": "Well yeah. The first two games Washington won, everyone was still bitching at him for bad plays ", 
+		"edited": 0, 
+		"author_flair_css_class": "Spurs2", 
+		"downs": 0, 
+		"subreddit": "nba", 
+		"score_hidden": 0, 
+		"name": "t1_cqug91z", 
+		"author_flair_text": "Spurs", 
+		"created_utc": 1430438402, 
+		"ups": 21,
+		"distinguished": null
+	}
+]
+
+
+Sample 1, SQL = """SELECT * FROM May2015 where subreddit = 'nba' AND name = 't1_cqug90h'"""
+
+[
+	{
+		"subreddit_id": "t5_2qo4s", 
+		"removal_reason": null, 
+		"link_id": "t3_34g8mx", 
+		"id": "cqug90h", 
+		"gilded": 0, 
+		"archived": 0, 
+		"author": "WyaOfWade", 
+		"parent_id": "t3_34g8mx", 
+		"score": 4, 
+		"retrieved_on": 1432703079, 
+		"controversiality": 0, 
+		"body": "gg this one's over. off to watch the NFL draft I guess", 
+		"edited": 0, 
+		"author_flair_css_class": "Heat", 
+		"downs": 0, 
+		"subreddit": "nba", 
+		"score_hidden": 0, 
+		"name": "t1_cqug90h", 
+		"author_flair_text": "Heat", 
+		"created_utc": 1430438400, 
+		"ups": 4, 
+		"distinguished": null
+	}
+]
+
+Sample 2, SQL = """SELECT * FROM May2015 where subreddit = 'nba' AND name = 't1_cqug91z'"""
+
+[
+    {
+        "subreddit_id": "t5_2qo4s",
+        "removal_reason": null,
+        "link_id": "t3_34gmd0",
+        "id": "cqug91z",
+        "gilded": 0,
+        "archived": 0,
+        "author": "starvinmartin",
+        "parent_id": "t1_cqug5ww",
+        "score": 21,
+        "retrieved_on": 1432703080,
+        "controversiality": 0,
+        "body": "Well yeah. The first two games Washington won, everyone was still bitching at him for bad plays ",
+        "edited": 0,
+        "author_flair_css_class": "Spurs2",
+        "downs": 0,
+        "subreddit": "nba",
+        "score_hidden": 0,
+        "name": "t1_cqug91z",
+        "author_flair_text": "Spurs",
+        "created_utc": 1430438402,
+        "ups": 21,
+        "distinguished": null
+    }
+]
+
+Sample 3, SQL = """SELECT * FROM May2015 where subreddit = 'nba' AND link_id = 't3_34g8mx'"""
+
+Sample 4, SQL = """SELECT * FROM May2015 where subreddit = 'nba' AND parent_id = 't3_34g8mx'"""

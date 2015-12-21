@@ -14,7 +14,7 @@ connection.row_factory = dict_factory
  
 cursor = connection.cursor()
  
-cursor.execute("select * from May2015 LIMIT 1000")
+cursor.execute("select * from May2015 LIMIT 10")
  
 # fetch all or one we'll go for all.
  
