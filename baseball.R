@@ -21,3 +21,15 @@ summarize(not.deleted.data, links = n_distinct(link_id), authors = n_distinct(au
 #  links authors parents
 #  (int)   (int)   (int)
 #  3242   14028   56315
+
+#NUMBER OF AUTHORS THAT COMMENT EACH TOPIC 
+authors.in.topic <- group_by(not.deleted.data, link_id)
+authors.in.topic.sum <- summarise(authors.in.topic, counting = n_distinct(author))
+authors.in.topic.frame <- data.frame(authors.in.topic.sum)
+summary(authors.in.topic.frame$counting)
+
+boxplot(authors.in.topic.frame$counting, horizontal = TRUE)
+
+#Min.    1st Qu.  Median    Mean    3rd Qu.    Max. 
+#1.00    3.00     9.00      22.93   24.75      475.00 
+
