@@ -26,10 +26,24 @@ summarize(not.deleted.data, links = n_distinct(link_id), authors = n_distinct(au
 authors.in.topic <- group_by(not.deleted.data, link_id)
 authors.in.topic.sum <- summarise(authors.in.topic, counting = n_distinct(author))
 authors.in.topic.frame <- data.frame(authors.in.topic.sum)
-summary(authors.in.topic.frame$counting)
 
+#stats
+summary(authors.in.topic.frame$counting)
 boxplot(authors.in.topic.frame$counting, horizontal = TRUE)
 
+#Summary: Authors by topic (link_id)
 #Min.    1st Qu.  Median    Mean    3rd Qu.    Max. 
 #1.00    3.00     9.00      22.93   24.75      475.00 
 
+#use only the posts that have more than one author so we can actually see interaction... 
+#a. frame to try some things
+relevant.frame <- tbl_df(data.frame(relevant.topics.by.authors)) # 2857 relevant topics
+
+#b. Select query on relevant attributes only
+all.posts <- select(not.deleted.data, created_utc, subreddit, link_id, name, author, score, body, controversiality)
+all.posts.sum <- summarise(all.posts, nm = n()) #112573
+
+#c. Just a try of the inner join... function only works with data frames
+top.50 <- tbl_df(head(relevant.topics.by.authors,50))
+test <- tbl_df(head(not.deleted.data,1000))
+together <- inner_join(test,relevant.frame) #works well and finds the topics that have more than one user
