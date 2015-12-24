@@ -1,7 +1,6 @@
-from modules import test
-from modules import load_subreddit, fetch_parent_links
+from modules import user_pairings
 
 def yo():
-    fetch_parent_links.retrieve('nba')
+    user_pairings.find('nba')
 if __name__ == '__main__':
     yo()
