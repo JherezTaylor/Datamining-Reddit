@@ -20,7 +20,7 @@ connection.row_factory = dict_factory
 
 cursor = connection.cursor()
 
-SQL = 'SELECT * FROM  May2015 WHERE subreddit = %s'%("'{}'".format(subreddit))
+SQL = 'SELECT * FROM May2015 WHERE subreddit = %s'%("'{}'".format(subreddit))
 
 cursor.execute(SQL)
 # fetch all or one we'll go for all.

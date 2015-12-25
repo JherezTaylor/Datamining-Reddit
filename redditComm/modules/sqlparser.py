@@ -1,6 +1,7 @@
 #!/bin/python
 import sqlite3
 import json
+import subreddit_dumps
 
 def dict_factory(cursor, row):
     d = {}

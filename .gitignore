@@ -59,5 +59,8 @@ target/
 # Virtual Environment
 venv
 
-#input files
+# input files
 redditComm/subreddit_dumps
+
+# output files
+redditComm/output
