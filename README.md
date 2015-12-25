@@ -6,4 +6,4 @@
 * Run redditComm/sqltojson.py with the argument being the name of the subreddit you want to extract. Ex: "python sqltojson.py nba"
 * Move the generated json file to redditComm/subreddit_dumps
 * Move the sqlite database to redditComm/subreddit_dumps
-* Run the entire setup from within redditComm. "python run.py"
+* Run the entire setup from within redditComm. "python run.py subreddit_name"
