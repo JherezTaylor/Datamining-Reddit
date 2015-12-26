@@ -47,3 +47,14 @@ all.posts.sum <- summarise(all.posts, nm = n()) #112573
 top.50 <- tbl_df(head(relevant.topics.by.authors,50))
 test <- tbl_df(head(not.deleted.data,1000))
 together <- inner_join(test,relevant.frame) #works well and finds the topics that have more than one user
+
+#CORE: Now I need a list of authors by topic
+non.deleted.authors <- filter(together, author!='[deleted]') #erase deleted authors.
+authors.and.topics <- select(non.deleted.authors, author, link_id)
+
+#trying to convert it into a matrix
+#http://web.stanford.edu/~messing/Affiliation%20Data.html
+M = as.matrix(table(authors.and.topics)) # restructure your network data in matrix format
+m = table(authors.and.topics)
+M = as.matrix(m)
+Mrow = M %*% t(M) #Mrow will be the one-mode matrix formed by the row entities. 2.7 Mb for 957 authors
