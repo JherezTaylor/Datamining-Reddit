@@ -1,6 +1,11 @@
-import json, load_subreddit, collections, sqlparser, output
+import json, load_subreddit, collections, sqlparser, output, logging
 import load_subreddit_castra, make_subreddit_castra
 from pprint import pprint
+from time import time
+
+logging.basicConfig(level = logging.DEBUG, format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.getLogger('requests').setLevel(logging.CRITICAL)
+logger = logging.getLogger(__name__)
 
 subreddit_posts = {}
 
@@ -51,10 +56,12 @@ def get_links(subreddit_posts):
     return parent_links
 
 def test(subreddit):
+    ts = time()
     # subreddit_posts = load_subreddit.load(subreddit)
     # subreddit_links = get_links(subreddit_posts)
     # pprint(subreddit_posts)
     # make_subreddit_castra.execute(subreddit)
+    # print('Query for '+subreddit+' took {}s'.format(time() - ts))
     load_subreddit_castra.load(subreddit)
 
 

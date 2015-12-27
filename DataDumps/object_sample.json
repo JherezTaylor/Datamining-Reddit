@@ -16,8 +16,8 @@ t5_: subreddit
 	If a parent node is of type comment (t1), then it means that it is a reply to a comment B which in turn is a reply to
 	link A (root).
 	
-	If the link_id == parent_id then it means that it is the root.
- 	Regardless of whether an object is a comment or not, it can still be linked to, and so it 
+	If the name of an object is of type t3 then it means that it is the root.
+ 	Regardless of whether an object is a comment or not, it can still be linked to, and so
  	they all have a link_id, which is of type link (t3_xxxx).
 
  	id refers to the id of an object itself, id == name and they are of type t1 (comment). Links are treated as comments
@@ -139,5 +139,3 @@ Sample 2, SQL = """SELECT * FROM May2015 where subreddit = 'nba' AND name = 't1_
 ]
 
 Sample 3, SQL = """SELECT * FROM May2015 where subreddit = 'nba' AND link_id = 't3_34g8mx'"""
-
-Sample 4, SQL = """SELECT * FROM May2015 where subreddit = 'nba' AND parent_id = 't3_34g8mx'"""
