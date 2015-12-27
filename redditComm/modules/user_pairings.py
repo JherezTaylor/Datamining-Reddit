@@ -1,12 +1,13 @@
 import json, load_subreddit, collections, sqlparser, output
 from pprint import pprint
+import cPickle as pickle
 
 def find(subreddit):
     subreddit_posts = load_subreddit.load(subreddit)
     parent_links = get_linkid(subreddit_posts)
     users_per_link = {}
     count = 0
-    
+
     for link in parent_links:
         SQL = """SELECT DISTINCT author FROM May2015 WHERE author != '[deleted]'
         AND subreddit = %s
@@ -34,6 +35,11 @@ def get_linkid(subreddit_posts):
             d['subreddit'] = post['subreddit']
             parent_links.append(d)
     return parent_links
+
+def test(subreddit):
+    f = open('subreddit_dumps/'+subreddit+'_dump.pkl', 'r')
+    data = pickle.load(f)
+    pprint(data)
 
 """
 deprecated
