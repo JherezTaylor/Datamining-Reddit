@@ -58,3 +58,59 @@ M = as.matrix(table(authors.and.topics)) # restructure your network data in matr
 m = table(authors.and.topics)
 M = as.matrix(m)
 Mrow = M %*% t(M) #Mrow will be the one-mode matrix formed by the row entities. 2.7 Mb for 957 authors
+
+head(Mrow)
+#Now using igraph
+#http://jfaganuk.github.io/2015/01/02/analyzing-a-basic-network/
+
+library(igraph)
+g1 <- graph.adjacency(Mrow, weighted = T, mode = 'directed')
+summary(g1) #585 nodes #25281 edges
+
+#Using graph.data.frame to reshape the matrix so that it is not wide, but tall
+library(reshape2)
+g2 <- melt(Mrow, id.vars = c('author'))
+
+# changing the column names
+colnames(g2) <- c('source','target','weight')
+
+# we also need to trim the names
+g <- graph.data.frame(g2, directed = T)
+
+#removing self loops
+g <- simplify(g, remove.loops = T, remove.multiple = F)
+
+# filter the network based on weight
+g.edge3 <- subgraph.edges(g, which(E(g)$weight < 4))
+g1.edge3 <- subgraph.edges(g.edge3, which(E(g.edge3)$weight == 1))
+
+#Centrality and Power Measures
+
+#Degree
+degree(g1.edge3)
+degree(g1.edge3, mode = 'total')
+degree(g1.edge3, mode = 'in')
+degree(g1.edge3, mode = 'out')
+
+#Betweennes
+betweenness(g1.edge3)
+
+#closeness
+closeness(g1.edge3)
+
+#network size
+vcount(g1.edge3)
+ecount(g1.edge3)
+
+# extract the components
+g.components <- clusters(g)
+
+# which is the largest component
+ix <- which.max(g.components$csize)
+
+#finding communities
+com <- edge.betweenness.community(g1.edge3)
+V(g1.edge3)$memb <- com$membership
+modularity(com)
+
+plot(com, g1.edge3)
