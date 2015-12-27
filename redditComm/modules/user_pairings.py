@@ -1,10 +1,12 @@
 import json, load_subreddit, collections, sqlparser, output
+import load_subreddit_castra, make_subreddit_castra
 from pprint import pprint
-import cPickle as pickle
+
+subreddit_posts = {}
 
 def find(subreddit):
     subreddit_posts = load_subreddit.load(subreddit)
-    parent_links = get_linkid(subreddit_posts)
+    sub_links = get_links(subreddit_posts)
     users_per_link = {}
     count = 0
 
@@ -24,22 +26,38 @@ def find(subreddit):
     return users_per_link
     return results
 
-def get_linkid(subreddit_posts):
+def get_links(subreddit_posts):
     parent_links = []
     processed_links = {}
     for post in subreddit_posts:
-        if post['link_id'] not in processed_links:
+        if post['link_id'] or post['parent_id'] not in processed_links:
             processed_links[post['link_id']] = post['link_id']
-            d = dict()
-            d['link_id'] = post['link_id']
-            d['subreddit'] = post['subreddit']
-            parent_links.append(d)
+
+            if post['link_id'] == post['parent_id']:
+                d = dict()
+                d['link_id'] = post['link_id']
+                d['parent_id'] = post['parent_id']
+                d['link_type'] = 'root_link'
+                d['subreddit'] = post['subreddit']
+                parent_links.append(d)
+
+            if post['link_id'] != post['parent_id']:
+                d = dict()
+                d['link_id'] = post['link_id']
+                d['parent_id'] = post['parent_id']
+                d['link_type'] = 'child_link'
+                d['subreddit'] = post['subreddit']
+                parent_links.append(d)
     return parent_links
 
 def test(subreddit):
-    f = open('subreddit_dumps/'+subreddit+'_dump.pkl', 'r')
-    data = pickle.load(f)
-    pprint(data)
+    # subreddit_posts = load_subreddit.load(subreddit)
+    # subreddit_links = get_links(subreddit_posts)
+    # pprint(subreddit_posts)
+    # make_subreddit_castra.execute(subreddit)
+    load_subreddit_castra.load(subreddit)
+
+
 
 """
 deprecated
