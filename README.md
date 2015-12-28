@@ -3,6 +3,13 @@
 * The task is to study the dataset and prepare a proposal of what knowledge you plan to extract from this dataset using a data-minng technique. The proposal must then be implemented along with a report of the analysis, techniques, methodology, evaluation and results.
 
 # Setup
+
+* Pull the repo and move the database.sqlite file into redditComm/subreddit_dumps
+## Extracting subreddit data
+* If you want to extract a given subreddit for use elsewhere then from within
+the same folder do python sqlextract.py *subreddit name* *output format*. Currently
+the argument accepts 'json' or 'pickle'. Any subreddit can be extracted. Output
+goes to subreddit_dumps.
 * Run redditComm/sqltojson.py with the argument being the name of the subreddit you want to extract. Ex: "python sqltojson.py nba"
 * Move the generated json file to redditComm/subreddit_dumps
 * Move the sqlite database to redditComm/subreddit_dumps
