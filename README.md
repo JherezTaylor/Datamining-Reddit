@@ -57,6 +57,7 @@ Then
 
     cd .. *up to the root folder of the repo*
     pip install -r requirements.txt
+    You may need to do pip install dask[complete]
 
 Okay so we should be good to go. Create your scripts and add them to
 redditComm/modules. Follow the structure of the existing files. Import modules
