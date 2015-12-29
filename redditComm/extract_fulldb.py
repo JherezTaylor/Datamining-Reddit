@@ -4,6 +4,7 @@ Run it with python extract_fulldb.py"""
 #!/bin/python
 import sqlite3, json, logging, os
 from time import time
+import re
 
 logging.basicConfig(level = logging.DEBUG, format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logging.getLogger('requests').setLevel(logging.CRITICAL)
@@ -15,8 +16,26 @@ def dict_factory(cursor, row):
         d[col[0]] = row[idx]
     return d
 
-def dump_file(results):
-    with open('subreddit_dumps/reddit_data_05-15.json', 'w+') as f:
+def slugify(value):
+    """
+    Convert to ASCII if 'allow_unicode' is False. Convert spaces to hyphens.
+    Remove characters that aren't alphanumerics, underscores, or hyphens.
+    Convert to lowercase. Also strip leading and trailing whitespace.
+    """
+    import unicodedata
+    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
+    value = unicode(re.sub('[^\w\s-]', '', value).strip().lower())
+    value = unicode(re.sub('[-\s]+', '-', value))
+    return value
+
+def get_subreddit_list():
+    with open('subreddit_list.json', 'r') as f:
+        data = json.load(f)
+    f.closed
+    return data
+
+def dump_file(subreddit,results):
+    with open('subreddit_dumps/'+subreddit+'.json', 'w+') as f:
         json.dump(results,f)
     f.closed
 
@@ -25,15 +44,20 @@ def main():
     connection.row_factory = dict_factory
     cursor = connection.cursor()
 
-    print "Executing query"
-
-    SQL = """SELECT * FROM May2015 LIMIT 10"""
-
+    subreddit_list = get_subreddit_list()
     ts = time()
-    cursor.execute(SQL)
-    results = cursor.fetchall()
+    dump_file('yo',subreddit_list)
 
-    dump_file(results)
+    for sub in subreddit_list:
+        curr = sub['subreddit']
+        print "Executing query "+curr
+        SQL = """SELECT * FROM May2015
+        WHERE subreddit = %s LIMIT 10"""%("'{}'".format(curr))
+
+        cursor.execute(SQL)
+        results = cursor.fetchall()
+        dump_file(slugify(curr),results)
+
     print('Full extract took {}s'.format(time() - ts))
     connection.close()
 

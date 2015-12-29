@@ -39,7 +39,7 @@ def main():
     print "Executing query "+subreddit
 
     SQL = """SELECT * FROM May2015
-    WHERE subreddit = %s LIMIT 10"""%("'{}'".format(subreddit))
+    WHERE subreddit = %s"""%("'{}'".format(subreddit))
 
     ts = time()
     cursor.execute(SQL)
