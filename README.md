@@ -16,22 +16,28 @@ You will first need to do the following
 
     git clone https://github.com/JherezTaylor/Datamining-Reddit.git
     Download the dataset from the link above
-    Move the database.sqlite file into redditComm/subreddit_dumps
+    Create a folder redditComm/subreddit_dumps and move database.sqlite there
 
-### Extracting subreddit data
+### Extracting the subreddit data
+
+To extract and convert the entire dataset to a castra file
+
+You will need to do the following
+
+    pyhton extract_fulldb.py
 
 If you want to extract a given subreddit for use elsewhere then from within
 the redditComm do
 
-    python sqlextract.py subreddit_name output_format
+    python extract_subreddit.py subreddit_name output_format
 
 Currently the argument accepts *json* or *pickle* and any subreddit can be
 extracted. Output goes to
-    
-    redditComm/subreddit_dumps.
-Example 
-    
-    python sqlextract.py nba json
+
+    redditComm/subreddit_dumps
+Example
+
+    python extract_subreddit.py nba json
 
 ### Running the entire project
 You need to be under Linux to run this, you can do it in Windows but setting
