@@ -31,5 +31,12 @@ def load(subreddit):
     # d = df.author.head(4) // First 4 authors
     # df.ups[df.ups > 7].compute()
 
-    comments_per_link_by_author = df.groupby(['link_id', 'author'])['ups'].count().compute()
-    comments_per_link_by_author.to_csv(f, header = True)
+    # Selections
+    # len(df[df.amount > 0])
+
+    # comments_per_link_by_author = df.groupby(['link_id', 'author'])['ups'].count().compute()
+    # comments_per_link_by_author.to_csv(f, header = True)
+
+    authors_flair = df.groupby(['author_flair_text', 'author', 'link_id'])['ups'].count().compute()
+    print authors_flair.head(10)
+    authors_flair.to_csv(f, header = True, encoding = 'utf-8')
