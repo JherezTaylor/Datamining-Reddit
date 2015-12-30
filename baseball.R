@@ -25,7 +25,6 @@ summarize(not.deleted.data, links = n_distinct(link_id), authors = n_distinct(au
 #  (int)   (int)   (int)
 #  3242   14028   56315  112573  112573
 
-
 #STEP 2: FILTERING THE DATA BY NUMBER OF AUTHORS ON EACH TOPIC 
 authors.in.topic <- group_by(not.deleted.data, link_id)
 authors.in.topic.sum <- summarise(authors.in.topic, counting = n_distinct(author))
@@ -121,9 +120,34 @@ modularity(com)
 
 #Second community algorithm finds less communities
 com2 <- walktrap.community(graph.authors.edge)
-modularity(com2)
+V(graph.authors.edge)$memb <- com2$membership
+
 #plot the communities
 plot(com2, graph.authors.edge, vertex.size=5, layout=layout.fruchterman.reingold, vertex.label=V(graph.authors.edge)$team, edge.arrow.size=0.2, edge.color="dark grey", edge.label.font=0.5)
+
+#members
+com2$membership
+V(graph.authors.edge)$name
+
+#subgraph of the largest community
+x <- which.max(sizes(com2))
+subg <- induced.subgraph(graph.authors.edge, which(membership(com2) == x))
+teams.community <- tbl_df(as.data.frame(get.vertex.attribute(subg)))
+tkplot(subg)
+
+plot.igraph(subg, layout=layout.fruchterman.reingold, vertex.size=15, vertex.label=NA, vertex.color="light green", edge.arrow.size=0.5, edge.color="gray", edge.label.font=5)
+
+#grouping by teams to see which teams are more popular
+a<- group_by(teams.community, team)
+b <- summarise(a, authors = n_distinct(name))
+c <- as.data.frame(b)
+
+authors.valid.teams<- filter(authors.in.team.sum, counting >10) #over 10 because many teams only have 1, 2 or less than ten followers
+authors.in.team.frame <- data.frame(authors.valid.teams)
+
+#plotting the data for different teams
+names.c <- c$team
+barplot(c$authors,legend=rownames(c$team), beside="TRUE", names.arg=names.c,  col = "light green", cex.names=0.6, las=2)
 
 #STEP 10: Centrality and Power Measures
 #Degree
