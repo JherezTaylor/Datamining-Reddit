@@ -2,9 +2,9 @@
 Run it with python extract_fulldb.py"""
 
 #!/bin/python
-import sqlite3, json, logging, os
+import sqlite3, json, logging, os, re
 from time import time
-import re
+from multiprocessing.pool import Pool
 
 logging.basicConfig(level = logging.DEBUG, format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logging.getLogger('requests').setLevel(logging.CRITICAL)
@@ -35,31 +35,31 @@ def get_subreddit_list():
     return data
 
 def dump_file(subreddit,results):
-    with open('subreddit_dumps/'+subreddit+'.json', 'w+') as f:
+    with open('subreddit_dumps/json/'+subreddit+'.json', 'w+') as f:
         json.dump(results,f)
     f.closed
 
-def main():
+def run_query(subreddit):
     connection = sqlite3.connect("subreddit_dumps/database.sqlite")
     connection.row_factory = dict_factory
     cursor = connection.cursor()
 
+    sub = subreddit['subreddit']
+    SQL = """SELECT * FROM May2015
+    WHERE subreddit = %s LIMIT 10"""%("'{}'".format(sub))
+    print "Executing query "+sub
+
+    cursor.execute(SQL)
+    results = cursor.fetchall()
+    dump_file(slugify(sub),results)
+    connection.close()
+
+def main():
     subreddit_list = get_subreddit_list()
     ts = time()
-    dump_file('yo',subreddit_list)
-
-    for sub in subreddit_list:
-        curr = sub['subreddit']
-        print "Executing query "+curr
-        SQL = """SELECT * FROM May2015
-        WHERE subreddit = %s LIMIT 10"""%("'{}'".format(curr))
-
-        cursor.execute(SQL)
-        results = cursor.fetchall()
-        dump_file(slugify(curr),results)
-
+    p = Pool(processes = 2)
+    p.map(run_query, subreddit_list)
     print('Full extract took {}s'.format(time() - ts))
-    connection.close()
 
 if __name__ == '__main__':
    main()
