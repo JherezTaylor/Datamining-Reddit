@@ -1,6 +1,6 @@
 """This module accepts the name of a subreddit as an argument
 and selects and dumps all the records in the subreddit as a json object.
-Run it with python sqltojson.py <subreddit> (without brackets)"""
+Run it with python extract_subreddit.py <subreddit> <file_type> (without brackets)"""
 
 #!/bin/python
 import sqlite3, json, logging, os
@@ -39,7 +39,7 @@ def main():
     print "Executing query "+subreddit
 
     SQL = """SELECT * FROM May2015
-    WHERE subreddit = %s LIMIT 10"""%("'{}'".format(subreddit))
+    WHERE subreddit = %s"""%("'{}'".format(subreddit))
 
     ts = time()
     cursor.execute(SQL)
