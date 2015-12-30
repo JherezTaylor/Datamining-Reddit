@@ -1,0 +1,56 @@
+library(RSQLite)
+library(dplyr)
+db <- src_sqlite('F:/ACADEMICS/TIGP-SNHCC/3rd-Term/Data Mining/Term Project/database/database.sqlite')
+ red_data <- tbl(db, 'May2015')
+hock_aut <- red_data %>% select(subreddit, author, parent_id, link_id, score) %>%
++ filter(subreddit == 'hockey', !is.na(author), author !='[deleted]')
+
+/*No of comments on a topic by authorwise
+SELECT author, link_id, count(id) as no_comments
+FROM May2015
+WHERE subreddit == 'hockey'  AND author != '[deleted]' AND link_id LIKE '%35vojq'
+GROUP BY author
+ORDER BY no_comments DESC
+LIMIT 100
+
+// Common Authors between two topics within one subreddit
+SELECT distinct(author)
+FROM May2015
+WHERE subreddit == 'hockey'  AND author != '[deleted]' AND link_id = 't3_35vojq' 
+AND author IN (SELECT distinct(author) FROM May2015 WHERE author != '[deleted]' AND link_id = 't3_37w6me')
+
+/* Verify common authors */
+
+SELECT link_id, id, body, score, created_utc
+FROM May2015
+WHERE subreddit == 'hockey'  AND author == 'rmeas002' AND (link_id = 't3_35vojq'  OR  link_id = 't3_37w6me')
+
+
+// Common Authors between three different topics
+SELECT distinct(author)
+FROM May2015
+WHERE author != '[deleted]' AND link_id = 't3_35vojq' 
+AND author IN (SELECT distinct(author) FROM May2015 WHERE author != '[deleted]' AND link_id = 't3_37w6me' 
+                 AND author IN (SELECT distinct(author) FROM May2015 WHERE author != '[deleted]' AND link_id = 't3_36K7u4' )
+ )
+
+
+/******** No of posts by a common author in various topics **********/
+
+SELECT author, link_id, count(id) as posts
+FROM May2015
+WHERE subreddit == 'hockey'  AND author == 'bearlytame' AND (link_id = 't3_36k7u4'  OR  link_id = 't3_37w6me' OR  link_id = 't3_3718vq')
+GROUP BY author, link_id
+ORDER BY posts DESC
+
+
+//Common authors among 4 different topics
+
+SELECT distinct(author)
+FROM May2015
+WHERE author != '[deleted]' AND link_id = 't3_36k7u4' 
+AND author IN (SELECT distinct(author) FROM May2015 WHERE author != '[deleted]' AND link_id = 't3_3718vq' 
+                 AND author IN (SELECT distinct(author) FROM May2015 WHERE author != '[deleted]' AND link_id = 't3_37iqe3'
+                                               AND author IN (SELECT distinct(author) FROM May2015 WHERE author != '[deleted]' AND link_id = 't3_37w6me') 
+                       )
+ )

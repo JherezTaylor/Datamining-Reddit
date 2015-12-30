@@ -29,10 +29,15 @@ def slugify(value):
     return value
 
 def get_subreddit_list():
-    with open('subreddit_list.json', 'r') as f:
-        data = json.load(f)
-    f.closed
-    return data
+    data = []
+    try:
+        with open('subreddit_list.json', 'r') as f:
+            data = json.load(f)
+    except IOError as e:
+        print "I/O error({0}): {1}".format(e.errno, e.strerror)
+    else:
+        f.closed
+        return data
 
 def dump_file(subreddit,results):
     with open('subreddit_dumps/json/'+subreddit+'.json', 'w+') as f:

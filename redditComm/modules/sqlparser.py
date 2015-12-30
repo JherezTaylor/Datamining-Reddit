@@ -1,4 +1,5 @@
 #!/bin/python
+"""This module accepts an SQL string and sends it to the db for processing."""
 import sqlite3
 import json
 import subreddit_dumps
