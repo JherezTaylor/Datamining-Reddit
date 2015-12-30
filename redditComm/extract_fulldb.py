@@ -2,7 +2,7 @@
 Run it with python extract_fulldb.py"""
 
 #!/bin/python
-import sqlite3, json, logging, os, re
+import sqlite3, json, logging, os, re, glob
 from time import time
 from multiprocessing.pool import Pool
 
@@ -46,7 +46,7 @@ def run_query(subreddit):
 
     sub = subreddit['subreddit']
     SQL = """SELECT * FROM May2015
-    WHERE subreddit = %s LIMIT 10"""%("'{}'".format(sub))
+    WHERE subreddit = %s"""%("'{}'".format(sub))
     print "Executing query "+sub
 
     cursor.execute(SQL)
@@ -54,11 +54,21 @@ def run_query(subreddit):
     dump_file(slugify(sub),results)
     connection.close()
 
+def merge_json_dumps():
+    read_files = glob.glob("subreddit_dumps/json/*.json")
+    with open("subreddit_dumps/merged_file.json", "wb") as outfile:
+        outfile.write('[{}]'.format(
+            ','.join([open(f, "rb").read() for f in read_files])))
+
 def main():
-    subreddit_list = get_subreddit_list()
     ts = time()
+    subreddit_list = get_subreddit_list()
     p = Pool(processes = 2)
     p.map(run_query, subreddit_list)
+
+    merge_json_dumps()
+    make_subreddit_castra.execute('merged_file')
+
     print('Full extract took {}s'.format(time() - ts))
 
 if __name__ == '__main__':

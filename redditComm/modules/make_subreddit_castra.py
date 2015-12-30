@@ -32,16 +32,16 @@ def to_df(batch):
     df = DataFrame.from_records(blobs, columns = columns)
     return df.set_index('created_utc')
 
-def load(subreddit):
-    with open('./subreddit_dumps/json/'+subreddit+'_dump.json', 'r') as f:
+def load(file_name):
+    with open('./subreddit_dumps/'+file_name+'.json', 'r') as f:
         data = json.load(f)
     f.closed
     return data
 
-def execute(subreddit):
+def execute(file_name):
     categories = ['distinguished', 'subreddit', 'removal_reason']
     f = load(subreddit)
-    batches = partition_all(2000, f)
+    batches = partition_all(200000, f)
     df, frames = peek(map(to_df, batches))
-    castra = Castra('./subreddit_dumps/'+subreddit+'_data.castra', template = df, categories = categories)
+    castra = Castra('./subreddit_dumps/'+file_name+'_data.castra', template = df, categories = categories)
     castra.extend_sequence(frames, freq = '3h')
