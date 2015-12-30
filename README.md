@@ -17,12 +17,16 @@ You will first need to do the following
     git clone https://github.com/JherezTaylor/Datamining-Reddit.git
     Download the dataset from the link above
     Create a folder redditComm/subreddit_dumps and move database.sqlite there
+    Create a folder redditComm/subreddit_dumps/json
 
 ### Extracting the subreddit data
 
 To extract and convert the entire dataset to a castra file
 
-You will need to do the following
+You will need to do the following. **Warning** This will generation 20+GB of files to redditComm/subreddit_dumps/json
+Each file is a json object of an entire subreddit. It is hacky but it is necessary to first extract the entire sqlite db,
+merge the subreddits into one file then convert it to a castra. The reason for this is that the db can't fit in memory (unless you have 30GB of ram lying around) and so it's not possible to extract it all in one query. You can delete the files in redditComm/subreddit_dumps/json 
+and the merged json file when the script completes.
 
     pyhton extract_fulldb.py
 
