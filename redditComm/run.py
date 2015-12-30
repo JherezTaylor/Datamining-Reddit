@@ -1,10 +1,10 @@
-from modules import user_pairings
+from modules import find_communities
 from sys import argv
 
-script, subreddit = argv
+script, file_name = argv
 
 def process():
     # user_pairings.find(str(subreddit))
-    user_pairings.test(subreddit)
+    find_communities.test(file_name)
 if __name__ == '__main__':
     process()

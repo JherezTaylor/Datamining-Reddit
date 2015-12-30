@@ -1,7 +1,7 @@
 from pandas import Timestamp, NaT, DataFrame
 from toolz import dissoc, peek, partition_all
 from castra import Castra
-import subreddit_dumps, output, json
+import output, json
 
 columns = ['archived', 'author', 'author_flair_css_class', 'author_flair_text',
            'body', 'controversiality', 'created_utc', 'distinguished', 'downs',
