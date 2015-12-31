@@ -47,7 +47,7 @@ V(graph.authors)$team=as.character(teams.df$author_flair_text[match(V(graph.auth
 
 #STEP 5: CREATING A SUBGRAPH WITH ELEMENTS THAT HAVE WEIGHT OVER 5 and PLOTTING
 # filter the network based on weight over 5... if we leave vertices with edges<5 then it looks very messy
-graph.authors.edge <- subgraph.edges(graph.authors, which(E(graph.authors)$weight >= 5))
+graph.authors.edge <- subgraph.edges(graph.authors, which(E(graph.authors)$weight >= 3))
 
 plot.igraph(graph.authors.edge, vertex.size=5, layout=layout.kamada.kawai, vertex.label=NA, edge.arrow.size=0.2, edge.color="dark grey", edge.label.font=0.5)
 
@@ -61,37 +61,62 @@ vcount(graph.authors.edge)
 ecount(graph.authors.edge)
 #Weight 1: 2411 nodes / 442888 edges
 #Weight 2: 2315 nodes / 119558 edges
-#Weight 3: 1856 nodes / 47070 edges
+#Weight 3: 2315 nodes / 59779 edges
 #Weight 4: 1468 nodes / 26480 edges
 #Weight 5: 1108 nodes / 15342 edges
-#Weight 6: 897 nodes / 11482 edges
-#Weight 7: 707 nodes / 8524 edges
-#Weight 8: 621 nodes / 7076 edges
-#Weight 9: 547 nodes / 5754 edges
-#Weight 10: 500 nodes / 5074 edges
-#Weight 20: 500 nodes / 5074 edges
 
 #First community algorithm: fast greedy algorithm
 com <- fastgreedy.community(graph.authors.edge)
 V(graph.authors.edge)$memb <- com$membership
-modularity(com)
+modularity(com) #0.4293762
 
-
-plot(com, graph.authors.edge, vertex.size=5, layout=layout.fruchterman.reingold, vertex.label=NA, edge.arrow.size=0.2, edge.color="dark grey", edge.label.font=0.5)
-
-
-com2 <- leading.eigenvector.community(graph.authors.edge)
-
-#Algorithm produces 691 communities... it is very sparse
 plot(com, graph.authors.edge, vertex.size=5, layout=layout.fruchterman.reingold, vertex.label=NA, edge.arrow.size=0.2, edge.color="dark grey", edge.label.font=0.5)
 
 #subgraph of the largest community
 x <- which.max(sizes(com))
-subg <- induced.subgraph(graph.authors.edge, which(membership(com) == 51))
-teams.community <- tbl_df(as.data.frame(get.vertex.attribute(subg)))
-tkplot(subg)
+sub.com.graph <- induced.subgraph(graph.authors.edge, which(membership(com) == x))
+teams.fast.greedy <- tbl_df(as.data.frame(get.vertex.attribute(sub.com.graph)))
 
-V(graph.authors.edge)$memb
+vcount(sub.com.graph) #1785 nodes
+ecount(sub.com.graph) #33090 edges
+
+#plotting subgraph
+plot.igraph(sub.com.graph, vertex.size=5, layout=layout.kamada.kawai, vertex.label=NA, edge.arrow.size=0.2, edge.color="dark grey", edge.label.font=0.5)
+
+#summary
+top.com <- group_by(teams.fast.greedy, team)
+top.com.df <- as.data.frame(summarise(top.com, Members = n_distinct(name)))
+
+#ordering by top teams 
+top.teams.com <- arrange(top_n(top.com.df, 20), desc(Members))
+
+#barplot
+com.names <- top.teams.com$team
+barplot(top.teams.com$Members,legend=rownames(top.teams.com$team), beside="TRUE", names.arg=com.names,  col = "orange", cex.names=0.6, las=2)
+
+#ALTERNATIVE: SPINGLASS ALGORITHM Finds 10 communities
+com2 <- spinglass.community(graph.authors.edge)
+V(graph.authors.edge)$memb <- com2$membership
+modularity(com2) #0.06434645
+
+#Algorithm produces 691 communities... it is very sparse
+plot(com2, graph.authors.edge, vertex.size=5, layout=layout.fruchterman.reingold, vertex.label=NA, edge.arrow.size=0.2, edge.color="dark grey", edge.label.font=0.5)
+
+#with spinglass algorithm
+y <- which.max(sizes(com2))
+subg <- induced.subgraph(graph.authors.edge, which(membership(com2) == y))
+teams.community <- tbl_df(as.data.frame(get.vertex.attribute(subg)))
+
+#summary
+top.com2 <- group_by(teams.community, team)
+top.com2.df <- as.data.frame(summarise(top.com2, Members = n_distinct(name)))
+
+#ordering for top 
+top.teams.com2 <- top_n(top.com2.df, 10)
+
+#plotting the data for different teams
+names <- top.teams.com2$team
+barplot(top.teams.com2$Members,legend=rownames(top.teams.com2$team), beside="TRUE", names.arg=names,  col = "gray", cex.names=0.6, las=2)
 
 #STEP 10: Centrality and Power Measures
 #Degree
