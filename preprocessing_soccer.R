@@ -6,9 +6,23 @@ summarize(data, links = n_distinct(link_id), authors = n_distinct(author), paren
 # links authors parents comments
 # 3747   25213   93357  206249
 
+#2.4 FILTERING TOPICS - link_id - BY SCORE: this assumes that in total users must get over n for their link to be relevant
+#Use the average score by topic assuming that below that number topics are not popular
+by.score <- group_by(data, link_id)
+by.score.sum <- as.data.frame(summarise(by.score, score_topic = sum(score)))
+
+summary(by.score.sum$score_topic)
+#  Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#-105.0     3.0    16.0   527.9   121.0 69720.0
+boxplot(by.score.sum$score_topic, horizontal = TRUE, col = "yellow")
+
+score.m <- mean(by.score.sum$score_topic) #use median here to avoid outliers in scores
+by.score.frame <- as.data.frame(filter(by.score.sum, score_topic>score.m))
+relevant.topics <- inner_join(data,by.score.frame)
+
 #2.1. BY THE NUMBER OF TIMES THAT EACH USER COMMENT ON ANY TOPIC IN THE SUBREDDIT
 #Here we can argue we are only interested in users who are very active in the subreddit, those over the mean
-authors.comments <- group_by(data, author)
+authors.comments <- group_by(relevant.topics, author)
 authors.comments.sum <- as.data.frame(summarise(authors.comments, comments = n_distinct(id)))
 
 summary(authors.comments.sum$comments)
@@ -18,7 +32,7 @@ boxplot(authors.comments.sum$comments, horizontal = TRUE, col = "light green")
 
 comments.m <- mean(authors.comments.sum$comments)
 authors.comments.df <- as.data.frame(filter(authors.comments.sum, comments>comments.m)) #authors that comment over the mean
-relevant.authors.by.comments <- inner_join(data, authors.comments.df)
+relevant.authors.by.comments <- inner_join(relevant.topics, authors.comments.df)
 
 #2.2. BY NUMBER OF AUTHORS BY NUMBER OF TOPICS THEY COMMENT ON
 #Reason: to take out users that are not very active in the subreddit, but commented on one topic
@@ -49,22 +63,8 @@ boxplot(authors.in.topic.frame$counting, horizontal = TRUE, col = "orange")
 
 relevant.authors.data <- inner_join(active.users.data,authors.in.topic.frame) #Inner join to find all topics with more than one author
 
-#2.4 FILTERING TOPICS - link_id - BY SCORE: this assumes that in total users must get over n for their link to be relevant
-#Use the average score by topic assuming that below that number topics are not popular
-by.score <- group_by(relevant.authors.data, link_id)
-by.score.sum <- as.data.frame(summarise(by.score, score_topic = sum(score)))
-
-summary(by.score.sum$score_topic)
-#  Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-#-5.0   183.8   432.0  1403.0  1239.0 42810.0 
-  boxplot(by.score.sum$score_topic, horizontal = TRUE, col = "yellow")
-
-score.m <- mean(by.score.sum$score_topic) #use median here to avoid outliers in scores
-by.score.frame <- as.data.frame(filter(by.score.sum, score_topic>score.m))
-relevant.sub.topics <- inner_join(relevant.authors.data,by.score.frame)
-
 #2.4 NOW FILTER BY THE POPULARITY OF EACH SUBTOPIC BASED ON ITS SCORE
-interactions.score <- group_by(relevant.sub.topics, parent_id)
+interactions.score <- group_by(relevant.authors.data, parent_id)
 interactions.score <- as.data.frame(summarise(interactions.score, total_sub = sum(score)))
 
 summary(interactions.score$total_sub)
@@ -76,11 +76,11 @@ score.sub.m <- mean(interactions.score$total_sub)
 interactions.score.frame <- as.data.frame(filter(interactions.score, total_sub>score.sub.m ))
 
 #Inner join to find all the relevant data at last
-soccer.data <- inner_join(relevant.sub.topics,interactions.score.frame)
+soccer.data <- inner_join(relevant.authors.data,interactions.score.frame)
 
 summarize(soccer.data , links = n_distinct(link_id), authors = n_distinct(author), parents = n_distinct(parent_id), ids = n_distinct(id))
 # links authors parents   ids
 # 178    3899    1649    31799
 
 #export data
-write.table(data, file="data_soccer.csv", row.names=FALSE, sep=",")
+write.table(soccer.data, file="soccer_preprocessed_data.csv", row.names=FALSE, sep=",")
