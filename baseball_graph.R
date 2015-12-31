@@ -37,8 +37,8 @@ Mrow = M %*% t(M) #Mrow will be the one-mode matrix formed by the row entities. 
 
 graph.data.order <- melt(Mrow, id.vars = c('author')) #Using graph.data.frame to reshape the matrix so that it is not wide, but tall
 colnames(graph.data.order) <- c('source','target','weight') # changing the column names to a different format
-graph.authors <- graph.data.frame(graph.data.order, directed = T) # make it into a graph data frame, the format for igraph
-graph.authors <- simplify(graph.authors, remove.loops = T, remove.multiple = F)#removing self loops
+graph.authors <- graph.data.frame(graph.data.order, directed = F) # make it into a graph data frame, the format for igraph
+graph.authors <- simplify(graph.authors, remove.loops = T, remove.multiple = T)#removing self loops
 
 #STEP 4: MATCHING THE TEAMS TO EACH OF THE NODES IN THE GRAPH
 #code source: http://www.shizukalab.com/toolkits/sna/plotting-networks-pt-2
@@ -49,11 +49,12 @@ V(graph.authors)$team=as.character(teams.df$author_flair_text[match(V(graph.auth
 # filter the network based on weight over 5... if we leave vertices with edges<5 then it looks very messy
 graph.authors.edge <- subgraph.edges(graph.authors, which(E(graph.authors)$weight >= 5))
 
+plot.igraph(graph.authors.edge, vertex.size=5, layout=layout.kamada.kawai, vertex.label=NA, edge.arrow.size=0.2, edge.color="dark grey", edge.label.font=0.5)
 
 #Original network size
 vcount(graph.authors)
 ecount(graph.authors)
-# 2411 nodes / 5810510 edges
+# 2411 nodes / 5,810,510 edges with multiple edges in directed graph/ 2,905,255 without multiple edges...
 
 #Subgraph
 vcount(graph.authors.edge)
@@ -70,19 +71,27 @@ ecount(graph.authors.edge)
 #Weight 10: 500 nodes / 5074 edges
 #Weight 20: 500 nodes / 5074 edges
 
-#First community algorithm: edge.betweenness.community
-com <- edge.betweenness.community(graph.authors.edge, modularity=TRUE, merges=TRUE)
+#First community algorithm: fast greedy algorithm
+com <- fastgreedy.community(graph.authors.edge)
 V(graph.authors.edge)$memb <- com$membership
 modularity(com)
+
+
+plot(com, graph.authors.edge, vertex.size=5, layout=layout.fruchterman.reingold, vertex.label=NA, edge.arrow.size=0.2, edge.color="dark grey", edge.label.font=0.5)
+
+
+com2 <- leading.eigenvector.community(graph.authors.edge)
 
 #Algorithm produces 691 communities... it is very sparse
 plot(com, graph.authors.edge, vertex.size=5, layout=layout.fruchterman.reingold, vertex.label=NA, edge.arrow.size=0.2, edge.color="dark grey", edge.label.font=0.5)
 
 #subgraph of the largest community
-sizes(com)
-subg <- induced.subgraph(graph.authors.edge, which(membership(com) >= x))
+x <- which.max(sizes(com))
+subg <- induced.subgraph(graph.authors.edge, which(membership(com) == 51))
 teams.community <- tbl_df(as.data.frame(get.vertex.attribute(subg)))
 tkplot(subg)
+
+V(graph.authors.edge)$memb
 
 #STEP 10: Centrality and Power Measures
 #Degree
