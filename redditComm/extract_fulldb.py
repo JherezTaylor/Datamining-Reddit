@@ -1,59 +1,83 @@
 """This module accepts dumps all the records in the dataset as a json object.
 Run it with python extract_fulldb.py"""
+
 #!/bin/python
-from __future__ import division, print_function
-from bz2 import BZ2File
-import ujson
+import sqlite3, json, logging, os, re, glob, make_subreddit_castra
 from time import time
-from pandas import Timestamp, NaT, DataFrame
-from toolz import dissoc
-from castra import Castra
-from toolz import peek, partition_all
 
 logging.basicConfig(level = logging.DEBUG, format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logging.getLogger('requests').setLevel(logging.CRITICAL)
 logger = logging.getLogger(__name__)
 
-columns = ['archived', 'author', 'author_flair_css_class', 'author_flair_text',
-           'body', 'controversiality', 'created_utc', 'distinguished', 'downs',
-           'edited', 'gilded', 'link_id', 'name', 'parent_id',
-           'removal_reason', 'score', 'score_hidden', 'subreddit', 'ups']
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
 
-def to_json(line):
-    """Convert a line of json into a cleaned up dict."""
-    # Convert timestamps into Timestamp objects
-    date = line['created_utc']
-    line['created_utc'] = Timestamp.utcfromtimestamp(int(date))
-    edited = line['edited']
-    line['edited'] = Timestamp.utcfromtimestamp(int(edited)) if edited else NaT
+def slugify(value):
+    """
+    Convert to ASCII if 'allow_unicode' is False. Convert spaces to hyphens.
+    Remove characters that aren't alphanumerics, underscores, or hyphens.
+    Convert to lowercase. Also strip leading and trailing whitespace.
+    """
+    import unicodedata
+    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
+    value = unicode(re.sub('[^\w\s-]', '', value).strip().lower())
+    value = unicode(re.sub('[-\s]+', '-', value))
+    return value
 
-    # Convert deleted posts into `None`s (missing text data)
-    if line['author'] == '[deleted]':
-        line['author'] = None
-    if line['body'] == '[deleted]':
-        line['body'] = None
+def get_subreddit_list():
+    data = []
+    try:
+        with open('subreddit_list.json', 'r') as f:
+            data = json.load(f)
+    except IOError as e:
+        print "I/O error({0}): {1}".format(e.errno, e.strerror)
+    else:
+        f.closed
+        return data
 
-    # Remove 'id', and 'subreddit_id' as they're redundant
-    # Remove 'retrieved_on' as it's irrelevant
-    return dissoc(line, 'id', 'subreddit_id', 'retrieved_on')
+def dump_file(subreddit,results):
+    with open('subreddit_dumps/json/'+subreddit+'.json', 'w+') as f:
+        json.dump(results,f)
+    f.closed
 
-def to_df(batch):
-    """Convert a list of json strings into a dataframe"""
-    blobs = map(to_json, batch)
-    df = DataFrame.from_records(blobs, columns = columns)
-    return df.set_index('created_utc')
+def run_query(subreddit_list):
+    count = 1
+    for s in subreddit_list:
+        connection = sqlite3.connect("subreddit_dumps/database.sqlite")
+        connection.row_factory = dict_factory
+        cursor = connection.cursor()
 
-def execute():
-    categories = ['distinguished', 'subreddit', 'removal_reason']
-    with BZ2File('subreddit_dumps/RC_2015-05.bz2') as f:
-        batches = partition_all(200000, f)
-        df, frames = peek(map(to_df, batches))
-        castra = Castra('subreddit_dumps/reddit_data.castra', template = df, categories = categories)
-        castra.extend_sequence(frames, freq = '3h')
+        sub = s['subreddit']
+        SQL = """SELECT * FROM May2015
+        WHERE subreddit = %s"""%("'{}'".format(sub))
+        print "Executing query "+str(sub)+', '+str(count)+' out of '+str(len(subreddit_list))
+
+        cursor.execute(SQL)
+        results = cursor.fetchall()
+        dump_file(slugify(sub),results)
+        connection.close()
+
+        with open("log_extract.txt", "a") as log:
+            log.write(str(sub) + ' '+str(count)+'\n')
+        count = count + 1
+
+def merge_json_dumps():
+    read_files = glob.glob("subreddit_dumps/json/*.json")
+    with open("subreddit_dumps/merged_file.json", "wb") as outfile:
+        outfile.write('[{}]'.format(
+            ','.join([open(f, "rb").read() for f in read_files])))
 
 def main():
     ts = time()
-    execute()
+    subreddit_list = get_subreddit_list()
+    run_query(subreddit_list)
+
+    merge_json_dumps()
+    make_subreddit_castra.execute('merged_file')
+
     print('Full extract took {}s'.format(time() - ts))
 
 if __name__ == '__main__':
