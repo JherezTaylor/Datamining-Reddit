@@ -2,7 +2,7 @@ library(dplyr)
 library(reshape2)
 library(igraph)
 
-data <- read.csv(file="data.csv",head=TRUE,sep=",")
+data <- read.csv(file="data_all_sports.csv",head=TRUE,sep=",")
 
 #STEP 1: FINDING THE TEAMS AND THE NUMBER OF AUTHORS WITHIN EACH TEAM. 
 authors.in.team <- group_by(data, author_flair_text)
@@ -19,11 +19,11 @@ teams <- distinct(select(data, author, author_flair_text))
 teams.df <- tbl_df(teams) #this makes a data frame matching authors with their team
 
 summarise(teams.df, n_distinct(author_flair_text), n_distinct(author))
-#Originally: Total number of teams: 103  , Total number of authors: 12500
-#After preprocessing: Total number of teams: 73, Total number of authors: 2411
+#Total number of teams:  899 , Total number of authors: 5128
 
 #STEP 2: CREATE THE ADJACENCY MATRIX FOR THE GRAPH
 authors.and.topics <- select(data, author, link_id) #with parent_id matrix is 5 million
+
 
 #convert it into an adjacent matrix so that we can plot the graph
 #http://web.stanford.edu/~messing/Affiliation%20Data.html
@@ -47,35 +47,42 @@ V(graph.authors)$team=as.character(teams.df$author_flair_text[match(V(graph.auth
 
 #STEP 5: CREATING A SUBGRAPH WITH ELEMENTS THAT HAVE WEIGHT OVER 5 and PLOTTING
 # filter the network based on weight over 5... if we leave vertices with edges<5 then it looks very messy
-graph.authors.edge <- subgraph.edges(graph.authors, which(E(graph.authors)$weight >= 5))
+graph.authors.edge <- subgraph.edges(graph.authors, which(E(graph.authors)$weight >= 1))
+
+plot.igraph(graph.authors.edge, layout=layout.fruchterman.reingold, vertex.label=NA, edge.arrow.size=0.2, edge.color="dark grey", edge.label.font=0.5)
 
 #Original network size
-vcount(graph.authors)
-ecount(graph.authors)
-# 2685 nodes / 3,603,270 edges...
+vcount(graph.authors) #285 for soccer and baseball
+ecount(graph.authors) #40470 edges
+# 2411 nodes / 5,810,510 edges with multiple edges in directed graph/ 2,905,255 without multiple edges...
 
 #Subgraph
-vcount(graph.authors.edge)
-ecount(graph.authors.edge)
-#Weight 1: 2105 nodes / 286602 edges
-#Weight 3: 2537 nodes / 82784 edges
-#Weight 5: 2105 nodes /34752 edges
+vcount(graph.authors.edge) #285 nodes
+ecount(graph.authors.edge) #6815 edges
+#Weight 1: 2411 nodes / 442888 edges
+#Weight 2: 2315 nodes / 119558 edges
+#Weight 3: 2315 nodes / 59779 edges
+#Weight 4: 1468 nodes / 26480 edges
+#Weight 5: 1108 nodes / 15342 edges
 
-plot.igraph(graph.authors.edge, vertex.size=5, layout=layout.kamada.kawai, vertex.label=NA, edge.arrow.size=0.2, edge.color="dark grey", edge.label.font=0.5)
 #First community algorithm: fast greedy algorithm
 com <- fastgreedy.community(graph.authors.edge)
 V(graph.authors.edge)$memb <- com$membership
-modularity(com) #0.4613242
+modularity(com) #0.4559995
 
-plot(com, graph.authors.edge, vertex.size=5, layout=layout.fruchterman.reingold, vertex.label=NA, edge.arrow.size=0.2, edge.color="dark grey", edge.label.font=0.5)
+
+com3 <- edge.betweenness.community(graph.authors.edge)
+
+#layout.fruchterman.reingold
+plot(com, graph.authors.edge, vertex.size=5, layout=layout.kamada.kawai, vertex.label=NA, edge.arrow.size=0.2, edge.color="dark grey", edge.label.font=0.5)
 
 #subgraph of the largest community
 x <- which.max(sizes(com))
 sub.com.graph <- induced.subgraph(graph.authors.edge, which(membership(com) == x))
 teams.fast.greedy <- tbl_df(as.data.frame(get.vertex.attribute(sub.com.graph)))
 
-vcount(sub.com.graph) #1592 nodes
-ecount(sub.com.graph) #1592 edges
+vcount(sub.com.graph) #1785 nodes
+ecount(sub.com.graph) #33090 edges
 
 #plotting subgraph
 plot.igraph(sub.com.graph, vertex.size=5, layout=layout.kamada.kawai, vertex.label=NA, edge.arrow.size=0.2, edge.color="dark grey", edge.label.font=0.5)
@@ -115,7 +122,7 @@ top.teams.com2 <- top_n(top.com2.df, 10)
 names <- top.teams.com2$team
 barplot(top.teams.com2$Members,legend=rownames(top.teams.com2$team), beside="TRUE", names.arg=names,  col = "gray", cex.names=0.6, las=2)
 
-#STEP 10: Centrality and Power Measures - THIS IS OPTIONAL TO SUPPORT IDEAS
+#STEP 10: Centrality and Power Measures
 #Degree
 degree(graph.authors.edge)
 degree(graph.authors.edge, mode = 'total')

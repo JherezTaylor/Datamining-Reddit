@@ -9,7 +9,7 @@ reddit_db <- src_sqlite('database.sqlite', create = FALSE)
 #https://cran.rstudio.com/web/packages/dplyr/vignettes/introduction.html
 
 baseball <- tbl(reddit_db, sql("SELECT * FROM May2015 WHERE subreddit='baseball'"))
-data <- select(baseball, author, author_flair_text, parent_id, link_id, score, subreddit, id)
+data <- select(baseball, author, created_utc, author_flair_text, parent_id, link_id, score, subreddit, id)
 not.deleted.data <- as.data.frame(filter(data, author!='[deleted]', !is.na(score)), n=-1) #erase values tht are deleted...
 
 #number of number of topics, subtopics and authors
@@ -44,25 +44,9 @@ active.m <- mean(top.users.df$no_topics)
 top.users.data <- as.data.frame(filter(top.users.df, no_topics>active.m))
 active.users.data <-inner_join(relevant.authors.by.comments,top.users.data)
 
-#2.3 FILTERING TOPICS - link_id - BY SCORE: this assumes that in total users must get over n for their link to be relevant
-#Use the average score by topic assuming that below that number topics are not popular
-by.score <- group_by(active.users.data, link_id)
-by.score.sum <- as.data.frame(summarise(by.score, score_topic = sum(score)))
-
-summary(by.score.sum$score_topic)
-#  Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-#  30.0   206.5   425.0   770.1   918.5  8417.0 
-boxplot(by.score.sum$score_topic, horizontal = TRUE, col = "yellow")
-
-score.m <- mean(by.score.sum$score_topic)
-by.score.frame <- as.data.frame(filter(by.score.sum, score_topic>score.m))
-
-#Inner join to find all the relevant data at last
-relevant.sub.topics <- inner_join(active.users.data,by.score.frame)
-
-#2.4. BY NUMBER OF AUTHORS THAT DIRECTLY INTERACT IN PARENT ID
+#2.3. BY NUMBER OF AUTHORS THAT DIRECTLY INTERACT IN PARENT ID
 #well, we may argue that discussions among more than the median are more interesting
-authors.in.topic <- group_by(relevant.sub.topics, parent_id)
+authors.in.topic <- group_by(active.users.data, parent_id)
 authors.in.topic.sum <- summarise(authors.in.topic, counting = n_distinct(author))
 
     summary(authors.in.topic.sum$counting)
@@ -74,9 +58,9 @@ authors.in.topic.frame <- as.data.frame(filter(authors.in.topic.sum, counting>au
     #Visualization
     boxplot(authors.in.topic.frame$counting, horizontal = TRUE, col = "orange")
 
-relevant.authors.data <- inner_join(relevant.sub.topics,authors.in.topic.frame) #Inner join to find all topics with more than one author
+relevant.authors.data <- inner_join(active.users.data,authors.in.topic.frame) #Inner join to find all topics with more than one author
 
-#2.5 NOW FILTER BY THE POPULARITY OF EACH SUBTOPIC BASED ON ITS SCORE
+#2.4 NOW FILTER BY THE POPULARITY OF EACH SUBTOPIC BASED ON ITS SCORE
 interactions.score <- group_by(relevant.authors.data, parent_id)
 interactions.score <- as.data.frame(summarise(interactions.score, total_sub = sum(score)))
 
@@ -93,7 +77,7 @@ data <- inner_join(relevant.authors.data,interactions.score.frame)
 
 #INITIAL RESULTS: MORE THAN 100,000
 #AFTER 1ST PREPROCESSING: 23,512
-#AFTER 2nd PREPROCESSING: 23,512
+#AFTER 2nd PREPROCESSING: 11,678
 
 summarize(data, links = n_distinct(link_id), authors = n_distinct(author), parents = n_distinct(parent_id), ids = n_distinct(id))
 # links authors parents   ids

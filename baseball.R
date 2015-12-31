@@ -12,6 +12,10 @@ reddit_db <- src_sqlite('database.sqlite', create = FALSE)
 baseball <- tbl(reddit_db, sql("SELECT * FROM May2015 WHERE subreddit='baseball'"))
 not.deleted.data <- filter(baseball, body!='[deleted]', !is.na(score)) #erase values tht are deleted...
 
+#with score over median
+#links authors parents   ids names
+#1725    6915   15780 27503 27503
+
 #summary of statistics
 summarise(not.deleted.data, mean_score = mean(score), median_score = median(score), sd_score= sd(score), max_score = max(score), total_comments = n())
 #mean_score        median_score sd_score max_score
@@ -25,19 +29,22 @@ summarize(not.deleted.data, links = n_distinct(link_id), authors = n_distinct(au
 #  (int)   (int)   (int)
 #  3242   14028   56315  112573  112573
 
-#STEP 2: FILTERING THE DATA BY NUMBER OF AUTHORS ON EACH TOPIC 
-authors.in.topic <- group_by(not.deleted.data, link_id)
-authors.in.topic.sum <- summarise(authors.in.topic, counting = n_distinct(author))
-relevant.topics.by.authors<- filter(authors.in.topic.sum, counting>1)
-authors.in.topic.frame <- data.frame(relevant.topics.by.authors)
 
-#stats
-summary(authors.in.topic.frame$counting)
-boxplot(authors.in.topic.frame$counting, horizontal = TRUE)
+#Filtering by parent id instead of topic
+authors.in.parent <- group_by(not.deleted.data, parent_id)
+authors.in.parent.sum <- summarise(authors.in.parent, counting = n_distinct(author))
+relevant.parents.by.authors<- filter(authors.in.parent.sum, counting>1)
+authors.in.parents.frame <- data.frame(relevant.parents.by.authors)
 
-#Summary: Authors by topic (link_id)
-#Min.    1st Qu.  Median    Mean    3rd Qu.    Max. 
-#1.00    3.00     9.00      22.93   24.75      475.00 
+#
+summary(authors.in.parents.frame$counting)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#2.000   2.000   2.000   4.093   3.000 182.000 
+
+boxplot(authors.in.parents.frame$counting, horizontal = TRUE, main="Number of authors with direct replies to others")
+
+
+summarize(relevant.parents.by.authors, links = n_distinct(link_id), authors = n_distinct(author), parents = n_distinct(parent_id))
 
 relevant.frame <- tbl_df(data.frame(relevant.topics.by.authors)) # 2857 relevant topics
 
@@ -73,6 +80,10 @@ summarise(together, n_distinct(author_flair_text), n_distinct(author))
 non.deleted.authors <- filter(together, author!='[deleted]') #erase deleted authors.
 authors.and.topics <- select(non.deleted.authors, author, link_id)
 
+
+
+
+
 #trying to convert it into an adjacent matrix so that we can plot the graph
 #http://web.stanford.edu/~messing/Affiliation%20Data.html
 M = as.matrix(table(authors.and.topics)) # restructure your network data in matrix format
@@ -83,13 +94,20 @@ Mrow = M %*% t(M) #Mrow will be the one-mode matrix formed by the row entities. 
 #STEP 6: USING IGRAPH TO CONSTRUCT THE GRAPH
 #http://jfaganuk.github.io/2015/01/02/analyzing-a-basic-network/
 
-#graph.data <- graph.adjacency(Mrow, weighted = T, mode = 'directed')
+#graph.data <- graph.adjacency(M, weighted = T, mode = 'directed')
 #summary(graph.data) #192nodes #9360 edges
 
 graph.data.order <- melt(Mrow, id.vars = c('author')) #Using graph.data.frame to reshape the matrix so that it is not wide, but tall
 colnames(graph.data.order) <- c('source','target','weight') # changing the column names to a different format
 graph.authors <- graph.data.frame(graph.data.order, directed = T) # make it into a graph data frame, the format for igraph
 graph.authors <- simplify(graph.authors, remove.loops = T, remove.multiple = F)#removing self loops
+
+#counting the number of nodes and edges
+vcount(graph.authors)
+ecount(graph.authors)
+#Weight 5: 139 nodes / 5810510 edges
+
+
 
 #STEP 7: MATCHING THE TEAMS TO EACH OF THE NODES IN THE GRAPH
 #code source: http://www.shizukalab.com/toolkits/sna/plotting-networks-pt-2
@@ -103,9 +121,7 @@ graph.authors.edge <- subgraph.edges(graph.authors, which(E(graph.authors)$weigh
 tkplot(graph.authors.edge) #this makes an interactive plot out of the data
 
 #network size
-vcount(graph.authors.edge)
-ecount(graph.authors.edge)
-#Weight 5: 139 nodes / 712 eddges
+
 
 #Plot graph 
 plot.igraph(graph.authors.edge, layout=layout.fruchterman.reingold, vertex.size=7, vertex.label=NA, vertex.color="sky blue", edge.arrow.size=0.5, edge.color="blue", edge.label.font=5)
