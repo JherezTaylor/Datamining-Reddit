@@ -1,18 +1,7 @@
-"""This module accepts dumps all the records in the dataset as a json object.
-Run it with python extract_fulldb.py"""
-#!/bin/python
-from __future__ import division, print_function
-from bz2 import BZ2File
-import ujson
-from time import time
 from pandas import Timestamp, NaT, DataFrame
-from toolz import dissoc
+from toolz import dissoc, peek, partition_all
 from castra import Castra
-from toolz import peek, partition_all
-
-logging.basicConfig(level = logging.DEBUG, format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logging.getLogger('requests').setLevel(logging.CRITICAL)
-logger = logging.getLogger(__name__)
+import output, json
 
 columns = ['archived', 'author', 'author_flair_css_class', 'author_flair_text',
            'body', 'controversiality', 'created_utc', 'distinguished', 'downs',
@@ -43,18 +32,16 @@ def to_df(batch):
     df = DataFrame.from_records(blobs, columns = columns)
     return df.set_index('created_utc')
 
-def execute():
+def load(file_name):
+    with open('./subreddit_dumps/'+file_name+'.json', 'r') as f:
+        data = json.load(f)
+    f.closed
+    return data
+
+def execute(file_name):
     categories = ['distinguished', 'subreddit', 'removal_reason']
-    with BZ2File('subreddit_dumps/RC_2015-05.bz2') as f:
-        batches = partition_all(200000, f)
-        df, frames = peek(map(to_df, batches))
-        castra = Castra('subreddit_dumps/reddit_data.castra', template = df, categories = categories)
-        castra.extend_sequence(frames, freq = '3h')
-
-def main():
-    ts = time()
-    execute()
-    print('Full extract took {}s'.format(time() - ts))
-
-if __name__ == '__main__':
-   main()
+    f = load(subreddit)
+    batches = partition_all(200000, f)
+    df, frames = peek(map(to_df, batches))
+    castra = Castra('./subreddit_dumps/'+file_name+'_data.castra', template = df, categories = categories)
+    castra.extend_sequence(frames, freq = '3h')
