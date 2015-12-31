@@ -112,13 +112,10 @@ interactions.score.frame <- as.data.frame(filter(interactions.score, total_sub>s
 #Inner join to find all the relevant data at last
 preprocessed.data <- inner_join(subreddits.data,interactions.score.frame)
 
-#INITIAL RESULTS: MORE THAN 100,000
-#AFTER 1ST PREPROCESSING: 23,512
-#AFTER 2nd PREPROCESSING: 11,678
-
+#RESULTS OF PREPROCESSING:
 summarize(preprocessed.data, links = n_distinct(link_id), authors = n_distinct(author), parents = n_distinct(parent_id), ids = n_distinct(id))
 #links authors parents    ids
 #5157    5221   12382     208244
 
 #export data
-write.table(data, file="data_all_sports.csv", row.names=FALSE, sep=",")
+write.table(preprocessed.data, file="data_all_sports.csv", row.names=FALSE, sep=",")
