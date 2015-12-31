@@ -24,17 +24,17 @@ summarize(data, links = n_distinct(link_id), authors = n_distinct(author), paren
 
 #2.0. BY THE NUMBER OF TIMES THAT EACH USER COMMENTs ON THE SUBREDDITS
 #Here we are filtering only by the number of users who comment accross subreddit, 0 will be deleted
-by.subreddit <- group_by(not.deleted.data, author)
+by.subreddit <- group_by(data, author)
 by.subreddit.sum <- as.data.frame(summarise(by.subreddit, No_subreddits = n_distinct(subreddit)))
 
 summary(by.subreddit.sum$No_subreddits)
 #Min.    1st Qu.  Median    Mean    3rd Qu.    Max. 
-#1.000   1.000    1.000     1.074   1.000    7.000 
+#1.000   1.000    1.000     1.214   1.000      10.000 
 boxplot(by.subreddit.sum$No_subreddits, horizontal = TRUE, col = "light green")
 
 subreddit.m <- mean(by.subreddit.sum$No_subreddits)
 subreddit.df <- as.data.frame(filter(by.subreddit.sum, No_subreddits>subreddit.m)) #authors that comment over the mean
-relevant.by.subreddit <- inner_join(not.deleted.data, subreddit.df)
+relevant.by.subreddit <- inner_join(data, subreddit.df)
 
 #2.1. BY THE NUMBER OF TIMES THAT EACH USER COMMENT ON ANY TOPIC IN THE SUBREDDIT
 #Here we can argue we are only interested in users who are very active in the subreddit, those over the mean
@@ -43,12 +43,12 @@ authors.comments.sum <- as.data.frame(summarise(authors.comments, comments = n_d
 
 summary(authors.comments.sum$comments)
 #Min.    1st Qu.  Median    Mean 3rd Qu.    Max. 
-# 2.0     5.0    12.0    43.8    31.0     45430.0 
+# 2.00     5.00    12.00    42.53    34.00 91900.00 
 boxplot(authors.comments.sum$comments, horizontal = TRUE, col = "light green")
 
 comments.m <- mean(authors.comments.sum$comments)
 authors.comments.df <- as.data.frame(filter(authors.comments.sum, comments>comments.m)) #authors that comment over the mean
-relevant.authors.by.comments <- inner_join(not.deleted.data, authors.comments.df)
+relevant.authors.by.comments <- inner_join(relevant.by.subreddit, authors.comments.df)
 
 #2.2. BY NUMBER OF AUTHORS BY NUMBER OF TOPICS THEY COMMENT ON
     #Reason: to take out users that are not very active in the subreddit, but commented on one topic
@@ -57,7 +57,7 @@ top.users.df <- as.data.frame(summarise(top.users, no_topics = n_distinct(author
     
     summary(top.users.df$no_topics)
     #Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    #1.000   1.000   2.000   4.108   4.000 186.000  
+    #1.00    1.00    4.00   10.77   10.00  881.00 
 
 active.m <- mean(top.users.df$no_topics)
 top.users.data <- as.data.frame(filter(top.users.df, no_topics>active.m))
@@ -86,7 +86,7 @@ authors.in.topic.sum <- summarise(authors.in.topic, counting = n_distinct(author
 
     summary(authors.in.topic.sum$counting)
     #Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    #1.000   1.000   1.000   1.738   2.000 120.000  
+    #1.000   1.000   1.000   1.505   1.000 531.000  
 
 authors.m <- mean(authors.in.topic.sum$counting)
 authors.in.topic.frame <- as.data.frame(filter(authors.in.topic.sum, counting>authors.m))
@@ -103,24 +103,22 @@ interactions.score <- as.data.frame(summarise(interactions.score, total_sub = su
 
 summary(interactions.score$total_sub)
 #  Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-#  -246.0     3.0     9.0    41.9    28.0 11100.0
+# -395.00     3.00    10.00    58.15    35.00 13860.00 
 boxplot(interactions.score$total_sub, horizontal = TRUE, col = "yellow")
 
 score.sub.m <- mean(interactions.score$total_sub)
 interactions.score.frame <- as.data.frame(filter(interactions.score, total_sub>score.sub.m ))
 
 #Inner join to find all the relevant data at last
-data <- inner_join(subreddits.data,interactions.score.frame)
-
-summarise(data, n_distinct(subreddit)) #6 subreddits survived
+preprocessed.data <- inner_join(subreddits.data,interactions.score.frame)
 
 #INITIAL RESULTS: MORE THAN 100,000
 #AFTER 1ST PREPROCESSING: 23,512
 #AFTER 2nd PREPROCESSING: 11,678
 
-summarize(data, links = n_distinct(link_id), authors = n_distinct(author), parents = n_distinct(parent_id), ids = n_distinct(id))
-# links authors parents   ids
-#1   264    2411    1167 11678
+summarize(preprocessed.data, links = n_distinct(link_id), authors = n_distinct(author), parents = n_distinct(parent_id), ids = n_distinct(id))
+#links authors parents    ids
+#5157    5221   12382     208244
 
 #export data
 write.table(data, file="data_all_sports.csv", row.names=FALSE, sep=",")
