@@ -2,8 +2,13 @@
 Run it with python extract_fulldb.py"""
 
 #!/bin/python
-import sqlite3, json, logging, os, re, glob, make_subreddit_castra
+import sqlite3, json, logging, os, re, glob
+from modules import make_subreddit_castra
 from time import time
+from multiprocessing.pool import Pool
+from sys import argv
+
+script, file_name = argv
 
 logging.basicConfig(level = logging.DEBUG, format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logging.getLogger('requests').setLevel(logging.CRITICAL)
@@ -27,10 +32,10 @@ def slugify(value):
     value = unicode(re.sub('[-\s]+', '-', value))
     return value
 
-def get_subreddit_list():
+def get_subreddit_list(file_name):
     data = []
     try:
-        with open('subreddit_list.json', 'r') as f:
+        with open('utils/'+file_name+'.json', 'r') as f:
             data = json.load(f)
     except IOError as e:
         print "I/O error({0}): {1}".format(e.errno, e.strerror)
@@ -43,26 +48,23 @@ def dump_file(subreddit,results):
         json.dump(results,f)
     f.closed
 
-def run_query(subreddit_list):
-    count = 1
-    for s in subreddit_list:
-        connection = sqlite3.connect("subreddit_dumps/database.sqlite")
-        connection.row_factory = dict_factory
-        cursor = connection.cursor()
+def run_query(subreddit):
+    connection = sqlite3.connect("subreddit_dumps/database.sqlite")
+    connection.row_factory = dict_factory
+    cursor = connection.cursor()
 
-        sub = s['subreddit']
-        SQL = """SELECT * FROM May2015
-        WHERE subreddit = %s"""%("'{}'".format(sub))
-        print "Executing query "+str(sub)+', '+str(count)+' out of '+str(len(subreddit_list))
+    sub = subreddit['subreddit']
+    SQL = """SELECT * FROM May2015
+    WHERE subreddit = %s"""%("'{}'".format(sub))
+    print "Executing query "+str(sub)
 
-        cursor.execute(SQL)
-        results = cursor.fetchall()
-        dump_file(slugify(sub),results)
-        connection.close()
+    cursor.execute(SQL)
+    results = cursor.fetchall()
+    dump_file(slugify(sub),results)
+    connection.close()
 
-        with open("log_extract.txt", "a") as log:
-            log.write(str(sub) + ' '+str(count)+'\n')
-        count = count + 1
+    with open("utils/log_extract.txt", "a") as log:
+        log.write(str(sub)+'\n')
 
 def merge_json_dumps():
     read_files = glob.glob("subreddit_dumps/json/*.json")
@@ -72,13 +74,12 @@ def merge_json_dumps():
 
 def main():
     ts = time()
-    subreddit_list = get_subreddit_list()
-    run_query(subreddit_list)
-
+    subreddit_list = get_subreddit_list(file_name)
+    p = Pool(processes = 2)
+    p.map(run_query, subreddit_list)
     merge_json_dumps()
     make_subreddit_castra.execute('merged_file')
-
     print('Full extract took {}s'.format(time() - ts))
-
+    
 if __name__ == '__main__':
-   main()
+   #main()

@@ -23,15 +23,43 @@ You will first need to do the following
 
 To extract and convert the entire dataset to a castra file
 
-You will need to do the following. **Warning** This will generation 20+GB of files to redditComm/subreddit_dumps/json
-Each file is a json object of an entire subreddit. It is hacky but it is necessary to first extract the entire sqlite db,
-merge the subreddits into one file then convert it to a castra. The reason for this is that the db can't fit in memory (unless you have 30GB of ram lying around) and so it's not possible to extract it all in one query. You can delete the files in redditComm/subreddit_dumps/json 
+You will need to do the following. **Warning** This will generation 20+GB of
+files to redditComm/subreddit_dumps/json
+Each file is a json object of an entire subreddit. It is hacky
+but it is necessary to first extract the entire sqlite db, merge the subreddits
+into one file then convert it to a castra. The reason for this is that the db
+can't fit in memory (unless you have 30GB of ram lying around) and so it's not
+possible to extract it all in one query. It's implemented using the
+multiprocessing module from python.
+
+Now, the query will hang at 36,025 out of 50,138 subreddits. Not sure exactly
+why this happens but the entire process takes a few hours before it hangs,
+always at the same subreddit 'zzzz' and the same number of files, 36,025. So
+guess what? More hacky workarounds. The script accepts the list of subreddits as
+an argument, just the name of the file without the extension. On the first run
+call the script from redditComm/utils
+
+    python extract_fulldb.py subreddit_list
+
+Go drink some coffee and read a book. When the script hangs, close the terminal
+and then from the same folder as before run:
+
+    python salvage_extract.py
+
+This will look in the folder where we are dumping the subreddits, check the
+contents and compares it the master list of subreddits to see what's missing.
+It generates a new json list for us to continue from. Now go and run the extract
+again, this time passing the newly generated file as the argument. Both these
+files are in the repo so you don't need to run the salvage module but it's there
+redditComm/utils if you need it.
+
+    python extract_fulldb.py unprocessed_list
+
+You can delete the files in redditComm/subreddit_dumps/json
 and the merged json file when the script completes.
 
-    pyhton extract_fulldb.py
-
 If you want to extract a given subreddit for use elsewhere then from within
-the redditComm do
+the redditComm/utils do
 
     python extract_subreddit.py subreddit_name output_format
 
@@ -76,4 +104,4 @@ created method to run at start.
 
 Run with
 
-    python run.py *subreddit_name*
+    python run.py
