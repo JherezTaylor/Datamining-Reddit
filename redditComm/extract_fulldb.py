@@ -80,6 +80,6 @@ def main():
     merge_json_dumps()
     make_subreddit_castra.execute('merged_file')
     print('Full extract took {}s'.format(time() - ts))
-    
+
 if __name__ == '__main__':
-   #main()
+   main()
