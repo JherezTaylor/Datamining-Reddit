@@ -43,5 +43,5 @@ def execute(file_name):
     f = load(file_name)
     batches = partition_all(200000, f)
     df, frames = peek(map(to_df, batches))
-    castra = Castra('./subreddit_dumps/reddit_data.castra', template = df, categories = categories)
+    castra = Castra('./subreddit_dumps/'+file_name+'.castra', template = df, categories = categories)
     castra.extend_sequence(frames, freq = '3h')

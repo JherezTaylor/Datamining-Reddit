@@ -88,8 +88,8 @@ def main():
     # subreddit_list = get_subreddit_list(file_name)
     # p = Pool(processes = 1)
     # p.map(run_query, subreddit_list)
-    merge_json_dumps()
-    # make_subreddit_castra.execute('merged_file')
+    # merge_json_dumps()
+    make_subreddit_castra.execute(file_name)
     print('Full extract took {}s'.format(time() - ts))
 
 if __name__ == '__main__':

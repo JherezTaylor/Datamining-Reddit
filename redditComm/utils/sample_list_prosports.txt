@@ -1,0 +1,14 @@
+AFL
+Baseball
+CFL
+Cricket
+Hockey
+MLS
+NBA
+NFL
+NRL
+Olympics
+progolf
+rugbyunion
+Soccer
+Tennis
