@@ -2,7 +2,7 @@
 Run it with python extract_fulldb.py"""
 
 #!/bin/python
-import sqlite3, json, logging, os, re, glob
+import sqlite3, json, logging, os, re, glob, gc
 from modules import make_subreddit_castra
 from time import time
 from multiprocessing.pool import Pool
@@ -67,18 +67,29 @@ def run_query(subreddit):
         log.write(str(sub)+'\n')
 
 def merge_json_dumps():
+    count = 1;
     read_files = glob.glob("subreddit_dumps/json/*.json")
-    with open("subreddit_dumps/merged_file.json", "wb") as outfile:
-        outfile.write('[{}]'.format(
-            ','.join([open(f, "rb").read() for f in read_files])))
+    file_path = "subreddit_dumps/merged_file.json"
+    with open(file_path, "r+") as outfile:
+        for f in read_files:
+            print 'File #'+ str(count)
+            count = count + 1
+            # collected = gc.collect()
+            # print "Garbage collection thresholds: " + str(gc.get_threshold())
+            # print "Garbage collector: collected " + str((collected)) + " objects."
+            with open(str(f), 'r') as data_file:
+                    # data = json.load(data_file)
+                    json_data = data_file.read().decode('utf-8')
+                    outfile.seek(os.stat(file_path).st_size -1)
+                    outfile.write(",{}]".format(json.dumps(json_data)))
 
 def main():
     ts = time()
-    subreddit_list = get_subreddit_list(file_name)
-    p = Pool(processes = 2)
-    p.map(run_query, subreddit_list)
+    # subreddit_list = get_subreddit_list(file_name)
+    # p = Pool(processes = 1)
+    # p.map(run_query, subreddit_list)
     merge_json_dumps()
-    make_subreddit_castra.execute('merged_file')
+    # make_subreddit_castra.execute('merged_file')
     print('Full extract took {}s'.format(time() - ts))
 
 if __name__ == '__main__':

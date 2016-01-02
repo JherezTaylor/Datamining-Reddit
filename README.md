@@ -55,6 +55,10 @@ redditComm/utils if you need it.
 
     python extract_fulldb.py unprocessed_list
 
+*Update* It fails a few times, there might be an issue with the multiprocessing
+pool running into some overhead somewhere. Run extract again if it fails and repeat
+the process above.
+
 You can delete the files in redditComm/subreddit_dumps/json
 and the merged json file when the script completes.
 

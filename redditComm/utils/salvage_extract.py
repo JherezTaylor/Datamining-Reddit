@@ -44,7 +44,7 @@ def get_made_files():
     Returns the contents of the folder where the subreddit dumps are stored as
     json files.
     """
-    read_files = glob.glob("./subreddit_dumps/json/*.json")
+    read_files = glob.glob("../subreddit_dumps/json/*.json")
     return read_files
 
 def create_new_list(made_files):
@@ -73,6 +73,10 @@ def main():
     setB = set(processed_list)
     diff = setA.difference(setB)
 
+    print 'Total: '+str(len(setA))
+    print 'Processed: '+str(len(setB))
+    print 'Remaining: '+str(len(diff))
+
     # After we get the subreddits that weren't processed, let's get the
     # their raw strings as the appear in the database.
     query_list = []
@@ -80,7 +84,7 @@ def main():
         if slugify(x) in diff:
             query_list.append({"subreddit": x})
 
-    with open('unprocessed_list.json', 'w+') as f:
+    with open('unprocessed_list7.json', 'w+') as f:
         json.dump(query_list,f)
     f.closed
 

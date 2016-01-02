@@ -22,17 +22,17 @@ def dict_factory(cursor, row):
 
 def dump_file(subreddit,results,file_type):
     if file_type == 'pickle':
-        f = open('./subreddit_dumps/'+subreddit+'_dump.pkl', 'wb')
+        f = open('../subreddit_dumps/'+subreddit+'_dump.pkl', 'wb')
         pickle.dump(results, f)
         f.close()
 
     if file_type == 'json':
-        with open('./subreddit_dumps/'+subreddit+'_dump.json', 'w+') as f:
+        with open('../subreddit_dumps/'+subreddit+'_dump.json', 'w+') as f:
     	       json.dump(results,f)
         f.closed
 
 def main():
-    connection = sqlite3.connect("./subreddit_dumps/database.sqlite")
+    connection = sqlite3.connect("../subreddit_dumps/database.sqlite")
     connection.row_factory = dict_factory
     cursor = connection.cursor()
 
