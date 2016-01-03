@@ -65,67 +65,36 @@ def run_query():
     with open("utils/log_extract.txt", "a") as log:
         log.write(str(sub)+'\n')
 
+def get_file_names():
+    """
+    Reads all the json files in the folder and removes the drive and path and
+    extension, only returning a list of strings with the file names.
+    """
+    read_files = glob.glob("subreddit_dumps/json_files/*.json")
+    result = []
+    for m in read_files:
+        drive, path = os.path.splitdrive(m)
+        path, filename = os.path.split(path)
+        name = os.path.splitext(filename)[0]
+        result.append(str(name))
+    return result
+
+def create_castras(file_list):
+    for f in file_list:
+        print 'Processing: '+ str(f)
+        make_subreddit_castra.execute(f)
+
+def extract():
+    subreddit_list = get_subreddit_list(file_name)
+    p = Pool(processes = 1)
+    p.map(run_query, subreddit_list)
 
 def main():
     ts = time()
-    # subreddit_list = get_subreddit_list(file_name)
-    # p = Pool(processes = 1)
-    # p.map(run_query, subreddit_list)
-    # run_query()
-    # merge_json_dumps()
-    file_list = ['golf','baseball','rugbyunion','cfl','tennis','soccer',
-                'afl','nrl','cricket','hockey','mls','nfl','nba']
-    for f in file_list:
-        print f
-        make_subreddit_castra.execute(f)
+    extract()
+    file_list = get_file_names()
+    create_castras(file_list)
     print('Full extract took {}s'.format(time() - ts))
 
 if __name__ == '__main__':
    main()
-
-"""
-def merge_json_dumps():
-   count = 1;
-   data = []
-   read_files = glob.glob("subreddit_dumps/sample/*.json")
-   file_path = "subreddit_dumps/merged_file.json"
-   with open(file_path, "w+") as outfile:
-       for f in read_files:
-           print 'File #'+ str(count)
-           count = count + 1
-           with file(str(f)) as data_file:
-               for xml in splitfile(data_file, format="json")):
-                   print xml
-for jsonstr in splitfile(data_file, format="json")):
-data_file.close()
-objs = parse_file(data_file)
-for i in objs:
-   data.append(i)
-collected = gc.collect()
-print "Garbage collection thresholds: " + str(gc.get_threshold())
-print "Garbage collector: collected " + str((collected)) + " objects."
-   json.dump(data,outfile)
-outfile.close()
-"""
-
-# SQL = """SELECT created_utc, author, author_flair_text,
-# parent_id, link_id, score, subreddit, id
-# FROM May2015 WHERE subreddit == 'baseball'
-# OR subreddit == 'golf' OR subreddit == 'rugbyunion'
-# OR subreddit == 'cfl' OR subreddit == 'tennis'
-# OR subreddit == 'soccer' OR subreddit == 'afl' OR subreddit = 'nrl'
-# OR subreddit == 'cricket' OR subreddit == 'hockey'
-# OR subreddit == 'mls' OR subreddit == 'nfl' OR subreddit == 'nba'
-# AND created_utc >= 1430438400 AND created_utc <= 1431604799"""
-
-"""
-def parse_file(file_name):
-    json_data = json.loads(file_name)
-    print json_data
-    print file_name
-    data = []
-    for i in json_data:
-        data.append(i)
-        print len(data)
-        return data
-        """

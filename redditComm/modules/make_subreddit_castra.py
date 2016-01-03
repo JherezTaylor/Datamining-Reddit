@@ -33,7 +33,7 @@ def to_df(batch):
     return df.set_index('created_utc')
 
 def load(file_name):
-    with open('./subreddit_dumps/sample/'+file_name+'.json', 'r') as f:
+    with open('./subreddit_dumps/json_files/'+file_name+'.json', 'r') as f:
         data = json.load(f)
     f.closed
     return data
