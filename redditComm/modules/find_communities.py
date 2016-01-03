@@ -3,6 +3,7 @@ import load_subreddit_castra, make_subreddit_castra
 from dask.diagnostics import ProgressBar
 from pprint import pprint
 from time import time
+import dask.dataframe as dd
 
 logging.basicConfig(level = logging.DEBUG, format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logging.getLogger('requests').setLevel(logging.CRITICAL)
@@ -47,10 +48,34 @@ def test(file_name):
     print df_cfl['ups'].count().compute()
     print df_tennis['ups'].count().compute()
 
-    df_cfl.join(df_tennis, on = None, how = 'outer',
-                lsuffix = '', rsuffix = '', npartitions = None).compute()
+    df_cfl = df_cfl[['author', 'link_id']].compute()
+    df_tennis = df_tennis[['author', 'link_id']].compute()
 
-    print df_cfl['ups'].count().compute()
+    """
+    If the categories aren't the same then you can't do a concat
+    ie, the subreddit is a categorie and they hold different values
+    for each dataframe
+    http://pandas.pydata.org/pandas-docs/stable/categorical.html
+
+    Because the field 'subreddit' is a category,
+    both dataframes must have categories of the same type.
+    Example, A = nba, B = hockey
+    So A.subreddit = nba, B.subreddit = hockey
+
+    They would have different values for subreddit so they can't be merged.
+    To get around that I can drop the field subreddit from both then merge,
+    but then it means that we would have to look up entries by the
+    subreddit ID and not the actual name
+    """
+    # df2 = df_cfl.append(df_tennis, axis = 'columns', fill_value=None)
+    # print df2.head()
+    df2 = dd.concat([df_cfl, df_tennis], axis = 0, interleave_partitions=True)
+    # print df2['link_id'].count().compute()
+    print df2.head()
+    df2.to_csv(f, header = True, encoding = 'utf-8')
+    # print df2['ups'].count().compute()
+
+    # print df2['ups'].count().compute()
 
     # bb_df = df[df.subreddit == 'baseball'].compute()
     # auth_per_top = df.groupby(['link_id', 'author'])['ups'].count().compute()

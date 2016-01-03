@@ -5,7 +5,7 @@ import output, json
 
 columns = ['archived', 'author', 'author_flair_css_class', 'author_flair_text',
            'body', 'controversiality', 'created_utc', 'distinguished', 'downs',
-           'edited', 'gilded', 'link_id', 'name', 'parent_id',
+           'edited', 'gilded', 'link_id', 'name', 'parent_id', 'subreddit_id',
            'removal_reason', 'score', 'score_hidden', 'id', 'subreddit', 'ups']
 
 def to_json(line):
@@ -24,7 +24,7 @@ def to_json(line):
 
     # Remove 'id', and 'subreddit_id' as they're redundant
     # Remove 'retrieved_on' as it's irrelevant
-    return dissoc(line, 'subreddit_id', 'retrieved_on')
+    return dissoc(line, 'retrieved_on')
 
 def to_df(batch):
     """Convert a list of json strings into a dataframe"""
@@ -39,9 +39,10 @@ def load(file_name):
     return data
 
 def execute(file_name):
-    categories = ['distinguished', 'subreddit', 'removal_reason']
+    categories = ['distinguished', 'removal_reason']
     f = load(file_name)
     batches = partition_all(200000, f)
     df, frames = peek(map(to_df, batches))
-    castra = Castra('./subreddit_dumps/'+file_name+'.castra', template = df, categories = categories)
+    castra = Castra('./subreddit_dumps/'+file_name+'.castra',
+                    template = df, categories = categories)
     castra.extend_sequence(frames, freq = '3h')
