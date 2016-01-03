@@ -6,7 +6,7 @@ import output, json
 columns = ['archived', 'author', 'author_flair_css_class', 'author_flair_text',
            'body', 'controversiality', 'created_utc', 'distinguished', 'downs',
            'edited', 'gilded', 'link_id', 'name', 'parent_id',
-           'removal_reason', 'score', 'score_hidden', 'subreddit', 'ups']
+           'removal_reason', 'score', 'score_hidden', 'id', 'subreddit', 'ups']
 
 def to_json(line):
     """Convert a line of json into a cleaned up dict."""
@@ -24,7 +24,7 @@ def to_json(line):
 
     # Remove 'id', and 'subreddit_id' as they're redundant
     # Remove 'retrieved_on' as it's irrelevant
-    return dissoc(line, 'id', 'subreddit_id', 'retrieved_on')
+    return dissoc(line, 'subreddit_id', 'retrieved_on')
 
 def to_df(batch):
     """Convert a list of json strings into a dataframe"""
@@ -33,7 +33,7 @@ def to_df(batch):
     return df.set_index('created_utc')
 
 def load(file_name):
-    with open('./subreddit_dumps/'+file_name+'.json', 'r') as f:
+    with open('./subreddit_dumps/sample/'+file_name+'.json', 'r') as f:
         data = json.load(f)
     f.closed
     return data

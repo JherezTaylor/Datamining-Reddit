@@ -13,6 +13,7 @@ pbar = ProgressBar()
 pbar.register()
 
 def test(file_name):
+    f = open('output/'+file_name+'.csv', 'w+')
     # Subsetting the dataframe
     # a = df[df.link_id == 't3_36k7u4'].compute()
 
@@ -41,9 +42,24 @@ def test(file_name):
     # print authors_flair.head(10)
     # authors_flair.to_csv(f, header = True, encoding = 'utf-8')
     ts = time()
-    df = load_subreddit_castra.load(file_name)
+    df_cfl = load_subreddit_castra.load('cfl')
+    df_tennis = load_subreddit_castra.load('tennis')
+    print df_cfl['ups'].count().compute()
+    print df_tennis['ups'].count().compute()
+
+    df_cfl.join(df_tennis, on = None, how = 'outer',
+                lsuffix = '', rsuffix = '', npartitions = None).compute()
+
+    print df_cfl['ups'].count().compute()
 
     # bb_df = df[df.subreddit == 'baseball'].compute()
-    auth_per_top = df.groupby(['link_id', 'author'])['ups'].count().compute()
+    # auth_per_top = df.groupby(['link_id', 'author'])['ups'].count().compute()
     # distinct_auth = auth_per_top.author.drop_duplicates().compute()
-    print auth_per_top.head(5)
+    # print auth_per_top.head(5)
+    # df_two_weeks = df.loc['2015-05-01': '2015-05-07']
+    # df_two_weeks_filter = df_two_weeks[['author', 'author_flair_text',
+    #                                     'parent_id', 'link_id',
+    #                                     'score', 'subreddit', 'id']].compute()
+    #
+    # df_two_weeks_filter.to_csv(f, header = True, encoding = 'utf-8')
+    # print df_two_weeks.tail(2)

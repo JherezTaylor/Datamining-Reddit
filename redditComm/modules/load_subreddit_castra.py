@@ -9,7 +9,6 @@ pbar = ProgressBar()
 pbar.register()
 
 def load(file_name):
-    # f = open('output/'+file_name+'.csv', 'w+')
-    c = Castra(path = './subreddit_dumps/'+file_name+'_data.castra/')
+    c = Castra(path = './subreddit_dumps/'+file_name+'.castra/')
     df = c.to_dask()
     return df

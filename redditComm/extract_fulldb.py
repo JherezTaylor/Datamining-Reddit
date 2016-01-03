@@ -4,6 +4,7 @@ Run it with python extract_fulldb.py"""
 #!/bin/python
 import sqlite3, json, logging, os, re, glob, gc
 from modules import make_subreddit_castra
+from splitstream import splitfile
 from time import time
 from multiprocessing.pool import Pool
 from sys import argv
@@ -44,21 +45,19 @@ def get_subreddit_list(file_name):
         return data
 
 def dump_file(subreddit,results):
-    with open('subreddit_dumps/json/'+subreddit+'.json', 'w+') as f:
+    with open('subreddit_dumps/'+subreddit+'.json', 'w+') as f:
         json.dump(results,f)
     f.closed
 
-def run_query(subreddit):
+def run_query():
     connection = sqlite3.connect("subreddit_dumps/database.sqlite")
     connection.row_factory = dict_factory
     cursor = connection.cursor()
 
     sub = subreddit['subreddit']
-    SQL = """SELECT * FROM May2015
-    WHERE subreddit = %s"""%("'{}'".format(sub))
+    SQL = """SELECT * FROM May2015 WHERE subreddit = ?"""
     print "Executing query "+str(sub)
-
-    cursor.execute(SQL)
+    cursor.execute(SQL, (sub,))
     results = cursor.fetchall()
     dump_file(slugify(sub),results)
     connection.close()
@@ -66,31 +65,67 @@ def run_query(subreddit):
     with open("utils/log_extract.txt", "a") as log:
         log.write(str(sub)+'\n')
 
-def merge_json_dumps():
-    count = 1;
-    read_files = glob.glob("subreddit_dumps/json/*.json")
-    file_path = "subreddit_dumps/merged_file.json"
-    with open(file_path, "r+") as outfile:
-        for f in read_files:
-            print 'File #'+ str(count)
-            count = count + 1
-            # collected = gc.collect()
-            # print "Garbage collection thresholds: " + str(gc.get_threshold())
-            # print "Garbage collector: collected " + str((collected)) + " objects."
-            with open(str(f), 'r') as data_file:
-                    # data = json.load(data_file)
-                    json_data = data_file.read().decode('utf-8')
-                    outfile.seek(os.stat(file_path).st_size -1)
-                    outfile.write(",{}]".format(json.dumps(json_data)))
 
 def main():
     ts = time()
     # subreddit_list = get_subreddit_list(file_name)
     # p = Pool(processes = 1)
     # p.map(run_query, subreddit_list)
+    # run_query()
     # merge_json_dumps()
-    make_subreddit_castra.execute(file_name)
+    file_list = ['golf','baseball','rugbyunion','cfl','tennis','soccer',
+                'afl','nrl','cricket','hockey','mls','nfl','nba']
+    for f in file_list:
+        print f
+        make_subreddit_castra.execute(f)
     print('Full extract took {}s'.format(time() - ts))
 
 if __name__ == '__main__':
    main()
+
+"""
+def merge_json_dumps():
+   count = 1;
+   data = []
+   read_files = glob.glob("subreddit_dumps/sample/*.json")
+   file_path = "subreddit_dumps/merged_file.json"
+   with open(file_path, "w+") as outfile:
+       for f in read_files:
+           print 'File #'+ str(count)
+           count = count + 1
+           with file(str(f)) as data_file:
+               for xml in splitfile(data_file, format="json")):
+                   print xml
+for jsonstr in splitfile(data_file, format="json")):
+data_file.close()
+objs = parse_file(data_file)
+for i in objs:
+   data.append(i)
+collected = gc.collect()
+print "Garbage collection thresholds: " + str(gc.get_threshold())
+print "Garbage collector: collected " + str((collected)) + " objects."
+   json.dump(data,outfile)
+outfile.close()
+"""
+
+# SQL = """SELECT created_utc, author, author_flair_text,
+# parent_id, link_id, score, subreddit, id
+# FROM May2015 WHERE subreddit == 'baseball'
+# OR subreddit == 'golf' OR subreddit == 'rugbyunion'
+# OR subreddit == 'cfl' OR subreddit == 'tennis'
+# OR subreddit == 'soccer' OR subreddit == 'afl' OR subreddit = 'nrl'
+# OR subreddit == 'cricket' OR subreddit == 'hockey'
+# OR subreddit == 'mls' OR subreddit == 'nfl' OR subreddit == 'nba'
+# AND created_utc >= 1430438400 AND created_utc <= 1431604799"""
+
+"""
+def parse_file(file_name):
+    json_data = json.loads(file_name)
+    print json_data
+    print file_name
+    data = []
+    for i in json_data:
+        data.append(i)
+        print len(data)
+        return data
+        """
