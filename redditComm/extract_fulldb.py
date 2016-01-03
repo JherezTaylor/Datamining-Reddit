@@ -91,7 +91,7 @@ def extract():
 
 def main():
     ts = time()
-    extract()
+    # extract()
     file_list = get_file_names()
     create_castras(file_list)
     print('Full extract took {}s'.format(time() - ts))
