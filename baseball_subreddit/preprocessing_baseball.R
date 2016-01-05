@@ -9,7 +9,7 @@ reddit_db <- src_sqlite('database.sqlite', create = FALSE)
 #https://cran.rstudio.com/web/packages/dplyr/vignettes/introduction.html
 
 baseball <- tbl(reddit_db, sql("SELECT * FROM May2015 WHERE subreddit='baseball'"))
-data <- select(baseball, author, created_utc, author_flair_text, parent_id, link_id, score, subreddit, id)
+data <- select(baseball, author, created_utc, author_flair_text, parent_id, link_id, score, controversiality, id)
 not.deleted.data <- as.data.frame(filter(data, author!='[deleted]', !is.na(score)), n=-1) #erase values tht are deleted...
 
 #number of number of topics, subtopics and authors
@@ -81,7 +81,7 @@ data <- inner_join(relevant.authors.data,interactions.score.frame)
 
 summarize(data, links = n_distinct(link_id), authors = n_distinct(author), parents = n_distinct(parent_id), ids = n_distinct(id))
 # links authors parents   ids
-#1   264    2411    1167 11678
+#  797    2685    2091    20871
 
 #export data
-write.table(data, file="data.csv", row.names=FALSE, sep=",")
+write.table(data, file="baseball_data.csv", row.names=FALSE, sep=",")

@@ -8,22 +8,22 @@ reddit_db <- src_sqlite('database.sqlite', create = FALSE)
 #https://cran.rstudio.com/web/packages/dplyr/vignettes/introduction.html...........
 
 all_data <- tbl(reddit_db, sql("SELECT * FROM May2015"))
-dataset<- filter(all_data, subreddit == 'baseball' | subreddit == 'golf'|  subreddit == 'rugbyunion'| subreddit == 'tennis'|subreddit == 'soccer' | subreddit == 'afl' | subreddit == 'Cricket'| subreddit == 'hockey'|subreddit == 'MLS'|subreddit == 'nfl'| subreddit == 'nba')
+dataset<- filter(all_data, subreddit == 'baseball' | subreddit == 'soccer' | subreddit == 'hockey'|subreddit == 'nfl'| subreddit == 'nba')
 clean.dataset <- filter(dataset, author!='[deleted]', !is.na(score))
 head(clean.dataset)
 
 data.select <- select(clean.dataset, created_utc, author, subreddit, author_flair_text, parent_id, link_id, score, subreddit, id)
 data <- as.data.frame(filter(data.select, author!='[deleted]'), n=-1) #erase values tht are deleted...
 
-data <- read.csv(file="data.csv",head=TRUE,sep=",")
+#data <- read.csv(file="all_data.csv",head=TRUE,sep=",")
 
 #Decided to export data to save memory
-write.table(data, file="data_sports.csv", row.names=FALSE, sep=",")
+write.table(data, file="all_data_five_sports.csv", row.names=FALSE, sep=",")
 
 #Summary of data for all sports... left out sports that do not have a lot of users like Olympics
 summarize(data, links = n_distinct(link_id), authors = n_distinct(author), parents = n_distinct(parent_id), comments = n_distinct(id), deportes = n_distinct(subreddit))
           # TOPICS   authors parents  comments sports
-          # 40120    152459  1076360  2438979  10
+          # 33752  140703 1003402  2282166        5
 
 
 #2.0. BY THE NUMBER OF TIMES THAT EACH USER COMMENTs ON THE SUBREDDITS
@@ -47,7 +47,7 @@ authors.comments.sum <- as.data.frame(summarise(authors.comments, comments = n_d
 
 summary(authors.comments.sum$comments)
 #Min.    1st Qu.  Median    Mean 3rd Qu.    Max. 
-# 2.00     5.00    12.00    42.53    34.00 91900.00 
+#2.00     5.00    12.00    43.92    35.00 86200.00
 boxplot(authors.comments.sum$comments, horizontal = TRUE, col = "light green")
 
 comments.m <- mean(authors.comments.sum$comments)
@@ -61,7 +61,7 @@ top.users.df <- as.data.frame(summarise(top.users, no_topics = n_distinct(author
     
     summary(top.users.df$no_topics)
     #Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    #1.00    1.00    4.00   10.77   10.00  881.00 
+    #1.00    1.00    4.00   11.15   10.00  860.00 
 
 active.m <- mean(top.users.df$no_topics)
 top.users.data <- as.data.frame(filter(top.users.df, no_topics>active.m))
@@ -90,7 +90,7 @@ authors.in.topic.sum <- summarise(authors.in.topic, counting = n_distinct(author
 
     summary(authors.in.topic.sum$counting)
     #Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-    #1.00    1.00    1.00    1.51    1.00  531.00  
+    #1.000   1.000   1.000   1.507   1.000 516.000  
 
 authors.m <- mean(authors.in.topic.sum$counting)
 authors.in.topic.frame <- as.data.frame(filter(authors.in.topic.sum, counting>authors.m))
@@ -107,7 +107,7 @@ interactions.score <- as.data.frame(summarise(interactions.score, total_sub = su
 
 summary(interactions.score$total_sub)
 #  Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-#  -225.00     3.00     9.00    73.12    35.00 13860.00 
+#   -208.00     3.00     9.00    74.99    35.00 12920.00
 boxplot(interactions.score$total_sub, horizontal = TRUE, col = "yellow")
 
 score.sub.m <- mean(interactions.score$total_sub)
@@ -119,7 +119,7 @@ preprocessed.data <- inner_join(subreddits.data,interactions.score.frame)
 #RESULTS OF PREPROCESSING:
 summarize(preprocessed.data, links = n_distinct(link_id), authors = n_distinct(author), parents = n_distinct(parent_id), ids = n_distinct(id))
 #links authors parents    ids
-#1737    5128    6937 164637
+#1444    4375    6004   148619
 
 #export data
 write.table(preprocessed.data, file="data_all_sports.csv", row.names=FALSE, sep=",")

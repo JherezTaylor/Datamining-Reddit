@@ -18,12 +18,15 @@ authors.in.team.sum <- as.data.frame(summarise(authors.in.team, counting = n_dis
 teams <- distinct(select(data, author, author_flair_text))
 teams.df <- tbl_df(teams) #this makes a data frame matching authors with their team
 
+to <- top_n(authors.in.team.sum, 10)
+
+
 summarise(teams.df, n_distinct(author_flair_text), n_distinct(author))
 #Originally: Total number of teams:  491      , Total number of authors:    3899
 
 
 #STEP 2: CREATE THE ADJACENCY MATRIX FOR THE GRAPH
-authors.and.topics <- select(data, author, link_id) #with parent_id matrix is 5 million
+authors.and.topics <- select(data, author, parent_id) #with parent_id matrix is 5 million
 
 #convert it into an adjacent matrix so that we can plot the graph
 #http://web.stanford.edu/~messing/Affiliation%20Data.html
@@ -90,6 +93,17 @@ top.teams.com <- arrange(top_n(top.com.df, 20), desc(Members))
 #barplot
 com.names <- top.teams.com$team
 barplot(top.teams.com$Members,legend=rownames(top.teams.com$team), beside="TRUE", names.arg=com.names,  col = "orange", cex.names=0.6, las=2)
+
+
+
+
+
+
+
+
+
+
+
 
 #ALTERNATIVE: SPINGLASS ALGORITHM Finds 10 communities
 com2 <- spinglass.community(graph.authors.edge)
